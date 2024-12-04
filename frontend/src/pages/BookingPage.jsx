@@ -63,7 +63,7 @@ function BookingPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-start space-y-6 mt-5">
+    <div className="flex flex-col items-center justify-start space-y-6 my-5">
       {/* Dropdown Menus */}
       <div className="flex justify-between items-center space-x-4 border-solid border-2 border-black w-10/12 p-2">
       {/* Departure City Dropdown */}

@@ -24,19 +24,23 @@ function ReservationPage() {
     }
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      return;  // Stop form submission if errors
+      return; // Stop form submission if errors
     }
 
-    // Submit Booking
-    alert(`Booking confirmed! ${numSeats} seat(s) reserved on ${state.trip.trainEng}.`);
-    navigate("/");  // Navigate back after booking
+    // Pass selected data to the payment page
+    navigate("/payment", {
+      state: {
+        trip: state.trip,
+        numSeats,
+        numLuggage,
+        luggageWeight,
+      },
+    });
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-100 to-white py-10 px-4">
-      <div 
-        className="max-w-lg mx-auto bg-white p-8 rounded-xl shadow-2xl transition-all transform hover:scale-105 duration-300"
-      >
+      <div className="max-w-lg mx-auto bg-white p-8 rounded-xl shadow-2xl transition-all transform hover:scale-105 duration-300">
         <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
           Reserve Your Seats for {state.trip.trainEng}
         </h2>
@@ -96,7 +100,7 @@ function ReservationPage() {
             type="submit"
             className="w-full bg-blue-600 text-white text-lg py-3 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all transform hover:scale-105 duration-200"
           >
-            Confirm Booking
+            Go to Payment
           </button>
         </form>
       </div>

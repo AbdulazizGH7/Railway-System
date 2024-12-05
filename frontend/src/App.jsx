@@ -6,6 +6,8 @@ import LoginPage from "./pages/LoginPage";
 import SignUpPage from "./pages/SignupPage";
 import BookingPage from "./pages/BookingPage";
 import PaymentPage from "./pages/PaymentPage";
+import ReservationsPage from "./pages/ReservationsPage";
+
 function App() {
   const router = createBrowserRouter(
     createRoutesFromElements(
@@ -16,6 +18,7 @@ function App() {
         <Route path="/" element={<MainLayout />}>
           <Route path="/" element={<HomePage userType={"st"}/>}/>
           <Route path="/booking" element={<TripsPage/>}/>
+          <Route path="/reservations" element={<ReservationsPage userType={"Admin"}/>}/>
           <Route path="/reserve" element={<BookingPage />} />
           <Route path="/payment" element={<PaymentPage />} />
         </Route>

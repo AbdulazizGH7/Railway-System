@@ -7,6 +7,7 @@ import SignUpPage from "./pages/SignupPage";
 import BookingPage from "./pages/BookingPage";
 import PaymentPage from "./pages/PaymentPage";
 import ReservationsPage from "./pages/ReservationsPage";
+import WaitlistPromotion from "./pages/WaitlistPromotion";
 
 function App() {
   const router = createBrowserRouter(
@@ -21,6 +22,7 @@ function App() {
           <Route path="/reservations" element={<ReservationsPage userType={"Admin"}/>}/>
           <Route path="/reserve" element={<BookingPage />} />
           <Route path="/payment" element={<PaymentPage />} />
+          <Route path="/WaitlistPromotion" element={<WaitlistPromotion />} />
         </Route>
 
       </>

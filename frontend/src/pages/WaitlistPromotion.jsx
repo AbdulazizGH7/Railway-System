@@ -16,8 +16,8 @@ const WaitlistPromotion = () => {
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve([
-          { value: 'TR101', label: 'Express Delight (Mumbai → Delhi, 2024-06-15)' },
-          { value: 'TR202', label: 'Mountain King (Pune → Bangalore, 2024-06-16)' },
+          { value: 'TR101', label: 'Express Aziz (Al-hasa → Al-baha, 2024-06-15)' },
+          { value: 'TR202', label: 'King Fahad (Dammam → Al Jubail, 2024-06-16)' },
         ]);
       }, 500);
     });
@@ -29,8 +29,8 @@ const WaitlistPromotion = () => {
       setTimeout(() => {
         const waitlistData = {
           'TR101': [
-            { passengerId: 'P001', name: 'John Doe', loyaltyPoints: 450, class: 'Second AC', waitlistPosition: 1 },
-            { passengerId: 'P002', name: 'Jane Smith', loyaltyPoints: 650, class: 'First AC', waitlistPosition: 2 },
+            { passengerId: 'P001', name: 'Ali', loyaltyPoints: 450, class: 'Second AC', waitlistPosition: 1 },
+            { passengerId: 'P002', name: 'Khalid', loyaltyPoints: 650, class: 'First AC', waitlistPosition: 2 },
           ],
           'TR202': [
             { passengerId: 'P003', name: 'Mike Johnson', loyaltyPoints: 250, class: 'Sleeper', waitlistPosition: 1 },

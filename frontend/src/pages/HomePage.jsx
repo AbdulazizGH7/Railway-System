@@ -55,7 +55,7 @@ function HomePage({ userType }) {
             {isAdmin && (
               <button
                 className="flex flex-col justify-center items-center bg-red-500 text-white py-10 px-6 rounded-lg shadow hover:bg-red-600 transition ease-in-out duration-200"
-                onClick={() => navigate("/assignStaff")}
+                onClick={() => navigate("/AssignDriverPage")}
               >
                 <FaUserCheck className="text-5xl mb-4" />
                 <span className="text-2xl font-semibold">Assign Staff</span>

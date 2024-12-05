@@ -8,6 +8,7 @@ import BookingPage from "./pages/BookingPage";
 import PaymentPage from "./pages/PaymentPage";
 import ReservationsPage from "./pages/ReservationsPage";
 import WaitlistPromotion from "./pages/WaitlistPromotion";
+import AssignDriverPage from"./pages/AssignDriverPage"
 
 function App() {
   const router = createBrowserRouter(
@@ -23,6 +24,7 @@ function App() {
           <Route path="/reserve" element={<BookingPage />} />
           <Route path="/payment" element={<PaymentPage />} />
           <Route path="/WaitlistPromotion" element={<WaitlistPromotion />} />
+          <Route path="/AssignDriverPage" element={<AssignDriverPage />} />
         </Route>
 
       </>

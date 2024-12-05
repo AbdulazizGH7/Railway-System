@@ -1,13 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaTrain, FaSignOutAlt } from 'react-icons/fa'; // Importing the SignOut icon
+import { FaTrain, FaSignOutAlt, FaBars } from 'react-icons/fa'; // Importing the SignOut and Bars icons
 
 function Navbar() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);  // State for managing mobile menu
   const navigate = useNavigate();  // Using the navigate hook
 
   const handleLogout = () => {
     // You can add any logout logic here, like clearing the session or token.
     navigate("/login");  // Navigates to the login page
+  };
+
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);  // Toggle the menu visibility on small screens
   };
 
   return (
@@ -18,16 +23,23 @@ function Navbar() {
         Saudi Railway
       </Link>
 
+      {/* Hamburger Icon for Mobile */}
+      <div className="lg:hidden">
+        <button onClick={toggleMenu} className="text-white text-3xl">
+          <FaBars />  {/* Hamburger icon */}
+        </button>
+      </div>
+
       {/* Navigation Links */}
-      <ul className="flex text-lg text-white gap-8">
+      <ul className={`lg:flex lg:gap-8 text-lg text-white gap-8 ${isMenuOpen ? "flex" : "hidden"} flex-col lg:flex-row`}>
         <li>
-          <Link to={"/"} className="hover:text-gray-200 transition-colors duration-300">Home</Link>
+          <Link to={"/"} className="hover:text-gray-200 transition-colors duration-300" onClick={() => setIsMenuOpen(false)}>Home</Link>
         </li>
         <li>
-          <Link to={"/booking"} className="hover:text-gray-200 transition-colors duration-300">Booking</Link>
+          <Link to={"/booking"} className="hover:text-gray-200 transition-colors duration-300" onClick={() => setIsMenuOpen(false)}>Booking</Link>
         </li>
         <li>
-          <Link to={"/reservations"} className="hover:text-gray-200 transition-colors duration-300">Reservation</Link>
+          <Link to={"/reservations"} className="hover:text-gray-200 transition-colors duration-300" onClick={() => setIsMenuOpen(false)}>Reservation</Link>
         </li>
         <li>
           <button 

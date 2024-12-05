@@ -44,7 +44,7 @@ function HomePage({ userType }) {
             {isAdmin && (
               <button
                 className="flex flex-col justify-center items-center bg-yellow-500 text-white py-10 px-6 rounded-lg shadow hover:bg-yellow-600 transition ease-in-out duration-200"
-                onClick={() => navigate("/waitlist")}
+                onClick={() => navigate("/WaitlistPromotion")}
               >
                 <FaClock className="text-5xl mb-4" />
                 <span className="text-2xl font-semibold">Waitlist</span>

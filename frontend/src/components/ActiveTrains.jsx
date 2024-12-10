@@ -26,7 +26,7 @@ function ActiveTrains() {
 
   return (
     <div className="border border-gray-300 rounded-md shadow-md p-4 bg-white max-w-[900px] mx-auto">
-      <h2 className="text-xl font-bold mb-4 text-gray-800 text-center">Active Trains Today</h2>
+      
       {trains.length > 0 ? (
         <div className="overflow-hidden">
           <div className="flex flex-col space-y-6 lg:space-y-4">

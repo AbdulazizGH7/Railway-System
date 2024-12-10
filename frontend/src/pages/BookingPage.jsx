@@ -27,15 +27,10 @@ function BookingPage() {
       return; // Stop form submission if errors
     }
 
-    // Pass selected data to the payment page
-    navigate("/payment", {
-      state: {
-        trip: state.trip,
-        numSeats,
-        numLuggage,
-        luggageWeight,
-      },
-    });
+    // Submit Booking
+    alert(`Booking confirmed! ${numSeats} seat(s) reserved on ${state.trip.trainEng}.`);
+    navigate("/");  // Navigate back after booking
+
   };
 
   return (
@@ -100,7 +95,7 @@ function BookingPage() {
             type="submit"
             className="w-full bg-blue-600 text-white text-lg py-3 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all transform hover:scale-105 duration-200"
           >
-            Go to Payment
+            Confirm Booking
           </button>
         </form>
       </div>

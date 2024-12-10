@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { FaCreditCard, FaMoneyBillAlt, FaApplePay } from "react-icons/fa";
 import { AiOutlineCheckCircle } from "react-icons/ai";
 
 function PaymentPage() {
@@ -53,25 +52,11 @@ function PaymentPage() {
           <h3 className="text-2xl font-semibold text-gray-700 mb-4">Total Payment</h3>
           <div className="flex justify-between items-center text-lg text-gray-600 mb-4">
             <span>Total Amount:</span>
-            <span className="text-2xl font-bold text-green-600">${paymentAmount}</span>
+            <span className="text-2xl font-bold text-green-600">﷼{paymentAmount}</span>
           </div>
           <p className="text-gray-600 text-sm mb-6">
             * Includes taxes and fees for luggage. The final payment may vary based on your selection.
           </p>
-
-          {/* Payment Methods */}
-          <h4 className="text-xl font-semibold text-gray-700 mb-4">Choose Payment Method</h4>
-          <div className="space-y-4">
-            <button className="w-full py-3 flex items-center justify-center border rounded-lg bg-gray-800 text-white text-lg hover:bg-gray-700 transition-all duration-200 shadow-md">
-              <FaCreditCard className="mr-3 text-xl" /> Credit Card
-            </button>
-            <button className="w-full py-3 flex items-center justify-center border rounded-lg bg-green-600 text-white text-lg hover:bg-green-700 transition-all duration-200 shadow-md">
-              <FaMoneyBillAlt className="mr-3 text-xl" /> PayPal
-            </button>
-            <button className="w-full py-3 flex items-center justify-center border rounded-lg bg-black text-white text-lg hover:bg-gray-900 transition-all duration-200 shadow-md">
-              <FaApplePay className="mr-3 text-xl" /> Apple Pay
-            </button>
-          </div>
         </div>
 
         {/* Payment Confirmation */}

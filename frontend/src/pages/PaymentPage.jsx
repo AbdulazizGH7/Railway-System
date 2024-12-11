@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom"; // Import useNavigate
 import { AiOutlineCheckCircle } from "react-icons/ai";
 
 function PaymentPage() {
   const { state } = useLocation(); // Access the passed state
+  const navigate = useNavigate(); 
   const [paymentAmount, setPaymentAmount] = useState(0);
 
   // Calculate payment based on the number of seats and luggage
@@ -16,6 +17,14 @@ function PaymentPage() {
       state.numSeats * seatPrice + state.numLuggage * luggagePrice;
     setPaymentAmount(totalAmount);
   }, [state]);
+
+  const handlePaymentSuccess = () => {
+    // Display payment success message (could be expanded)
+    alert("Payment Successful!");
+
+    // Navigate back to the Reservations Page
+    navigate('/reservations');
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-100 to-white py-10 px-4">
@@ -62,7 +71,7 @@ function PaymentPage() {
         {/* Payment Confirmation */}
         <div className="flex justify-center mt-8">
           <button
-            onClick={() => alert("Payment Successful!")}
+            onClick={handlePaymentSuccess} 
             className="w-full bg-blue-600 text-white text-lg py-4 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all duration-200"
           >
             Confirm Payment <AiOutlineCheckCircle className="inline-block ml-2 text-xl" />

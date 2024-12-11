@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import ReservationModal from '../components/ReservationModal';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 import EditReservationModal from '../components/EditReservationModal';
-import { FaTrash, FaPen} from 'react-icons/fa';
-
+import { FaTrash, FaPen } from 'react-icons/fa';
+import { AiOutlineCheckCircle } from 'react-icons/ai';
+import { useNavigate } from 'react-router-dom';
 
 function ReservationsPage({ userType }) {
-
     const isAdmin = userType === 'Admin';
+    const navigate = useNavigate(); 
 
     const [reservations, setReservations] = useState([
         { 
@@ -18,7 +19,8 @@ function ReservationsPage({ userType }) {
             date: '2024-1-1',
             departureTime: '08:00 AM',
             arrivalTime: '09:30 AM',
-            duration: '1h 30m'
+            duration: '1h 30m',
+            isPaid: false, 
         },
         { 
             id: '23789274', 
@@ -28,7 +30,8 @@ function ReservationsPage({ userType }) {
             date: '2024-1-2',
             departureTime: '10:00 AM',
             arrivalTime: '12:00 PM',
-            duration: '2h 00m'
+            duration: '2h 00m',
+            isPaid: false, 
         },
     ]);
 
@@ -56,6 +59,18 @@ function ReservationsPage({ userType }) {
         ));
     };
 
+    const handlePaymentRedirect = (reservation) => {
+        // Redirect to the PaymentPage with the reservation details
+        navigate('/payment', {
+            state: { 
+                trip: reservation,
+                numSeats: 1, // Example, change according to actual logic
+                numLuggage: 0, // Example, change according to actual logic
+                luggageWeight: 0, // Example, change according to actual logic
+            }
+        });
+    };
+
     return (
         <div className="flex flex-col items-center justify-start space-y-6 my-5">
             {/* Search Bar */}
@@ -75,6 +90,7 @@ function ReservationsPage({ userType }) {
                         <th className="px-4 py-2">From</th>
                         <th className="px-4 py-2">To</th>
                         <th className="px-4 py-2">Date</th>
+                        <th className="px-4 py-2">Payment Status</th>
                         {isAdmin && <th className="px-4 py-2"></th>}
                         {isAdmin && <th className="px-4 py-2"></th>}
                     </tr>
@@ -92,6 +108,21 @@ function ReservationsPage({ userType }) {
                                 <td className="px-4 py-2">{reservation.from}</td>
                                 <td className="px-4 py-2">{reservation.to}</td>
                                 <td className="px-4 py-2">{reservation.date}</td>
+                                <td className="px-4 py-2">
+                                    {reservation.isPaid ? (
+                                        <span className="text-green-600 font-semibold">Paid</span>
+                                    ) : (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handlePaymentRedirect(reservation); // Navigate to PaymentPage
+                                            }}
+                                            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+                                        >
+                                            Paying <AiOutlineCheckCircle className="inline-block ml-2 text-xl" />
+                                        </button>
+                                    )}
+                                </td>
                                 {isAdmin && (
                                     <td className="px-4 py-2">
                                         <FaPen 
@@ -119,7 +150,7 @@ function ReservationsPage({ userType }) {
                     ) : (
                         <tr>
                             <td
-                                colSpan={isAdmin ? 7 : 5}
+                                colSpan={isAdmin ? 8 : 6}
                                 className="px-4 py-2 text-center"
                             >
                                 No reservations found.

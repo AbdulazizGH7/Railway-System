@@ -6,7 +6,13 @@ const trainSchema = new mongoose.Schema({
     nameAr: String,
     totalSeats: Number,
     distance: Number,
-    seatCost: Number,  
+    seatCost: Number,
+    status:{
+      type: String,
+      enum: ['active', 'finished'],  
+      default: 'active',   
+      required: true  
+    },  
     route: {  
       source: {  
         station: {  

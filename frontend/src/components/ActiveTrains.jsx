@@ -1,18 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios'
 import TrainCard from './TrainCard';
+import Spinner from './Spinner';
 
 function ActiveTrains() {
-  const trains = [
-    { trainNumber: 1, departureTime: '06:13', departureStation: 'HAF', arrivalTime: '08:40', arrivalStation: 'RYD', duration: '2h 27m' },
-    { trainNumber: 2, departureTime: '07:30', departureStation: 'DAM', arrivalTime: '09:45', arrivalStation: 'RUH', duration: '2h 15m' },
-    { trainNumber: 3, departureTime: '08:00', departureStation: 'HAF', arrivalTime: '10:30', arrivalStation: 'JED', duration: '2h 30m' },
-    { trainNumber: 4, departureTime: '09:45', departureStation: 'JED', arrivalTime: '12:10', arrivalStation: 'MED', duration: '2h 25m' },
-    { trainNumber: 5, departureTime: '11:00', departureStation: 'RUH', arrivalTime: '13:30', arrivalStation: 'DAM', duration: '2h 30m' },
-    { trainNumber: 6, departureTime: '12:15', departureStation: 'MED', arrivalTime: '14:45', arrivalStation: 'RUH', duration: '2h 30m' },
-  ];
 
-  // State to manage the number of visible trains
+  const [trains, setTrains] = useState([])
+  const [loading, setLoading] = useState(true)
   const [visibleCount, setVisibleCount] = useState(2);
+
+  useEffect(() =>{
+    try{
+      axios.get("http://localhost:8000/api/trains/today")
+      .then((response) =>{
+        setTrains(response.data)
+      })
+    }
+    catch(err){
+      console.log(err)
+    }
+    finally{
+      setLoading(false)
+    }
+  }, [])
 
   // Handle showing more trains
   const handleShowMore = () => {
@@ -25,6 +35,9 @@ function ActiveTrains() {
   };
 
   return (
+    <>
+    <button className='bg-black p-60' onClick={() => console.log(trains)}>ff</button>
+    <Spinner loading={loading}/>
     <div className="border border-gray-300 rounded-md shadow-md p-4 bg-white max-w-[900px] mx-auto">
       
       {trains.length > 0 ? (
@@ -32,12 +45,12 @@ function ActiveTrains() {
           <div className="flex flex-col space-y-6 lg:space-y-4">
             {trains.slice(0, visibleCount).map((train) => (
               <TrainCard
-                key={train.trainNumber}
-                tripId={train.trainNumber}
-                departureTime={train.departureTime}
-                departureStation={train.departureStation}
-                arrivalTime={train.arrivalTime}
-                arrivalStation={train.arrivalStation}
+                key={train._id}
+                tripId={train._id}
+                departureTime={train.departure}
+                departureStation={train.from}
+                arrivalTime={train.arrival}
+                arrivalStation={train.to}
                 duration={train.duration}
               />
             ))}
@@ -65,6 +78,7 @@ function ActiveTrains() {
         <div className="text-xl mb-4 text-gray-800 text-center h-80 p-32">There are no trains today</div>
       )}
     </div>
+    </>
   );
 }
 

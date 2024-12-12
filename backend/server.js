@@ -1,13 +1,14 @@
 const express = require('express')
 const mongoose = require('mongoose')
 const cors = require('cors');
-const PORT = 8000
+const trains = require('./routes/trains')
+const PORT = process.env.PORT || 9000
 
 const app = express()
 app.use(cors());
 app.use(express.json())
 
-mongoose.connect("mongodb+srv://admin:admin@thevault.p73el.mongodb.net/Railway?retryWrites=true&w=majority&appName=TheVault  ")
+mongoose.connect(process.env.DB_LINK)
 .then(()=>{
     console.log("Connected to the DB")
     app.listen(PORT, () =>{
@@ -17,3 +18,5 @@ mongoose.connect("mongodb+srv://admin:admin@thevault.p73el.mongodb.net/Railway?r
 .catch((err) =>{
     console.log("Failed to connect to the DB", err)
 })
+
+app.use('/api/trains', trains)

@@ -59,37 +59,6 @@ function BookingPage() {
             {errors.numSeats && <p className="text-red-500 text-sm">{errors.numSeats}</p>}
           </div>
 
-          {/* Luggage */}
-          <div className="space-y-2">
-            <label htmlFor="numLuggage" className="block text-lg font-medium text-gray-700">
-              <FiPackage className="inline-block mr-2" /> Number of Luggage
-            </label>
-            <input
-              type="number"
-              id="numLuggage"
-              value={numLuggage}
-              onChange={(e) => setNumLuggage(e.target.value)}
-              min="0"
-              className="w-full px-4 py-3 border rounded-lg text-lg transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none transform hover:scale-105 duration-200"
-            />
-          </div>
-
-          {/* Luggage Weight */}
-          <div className="space-y-2">
-            <label htmlFor="luggageWeight" className="block text-lg font-medium text-gray-700">
-              Luggage Weight (kg)
-            </label>
-            <input
-              type="number"
-              id="luggageWeight"
-              value={luggageWeight}
-              onChange={(e) => setLuggageWeight(e.target.value)}
-              min="0"
-              className="w-full px-4 py-3 border rounded-lg text-lg transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none transform hover:scale-105 duration-200"
-            />
-            {errors.luggageWeight && <p className="text-red-500 text-sm">{errors.luggageWeight}</p>}
-          </div>
-
           {/* Submit Button */}
           <button
             type="submit"

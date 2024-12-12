@@ -36,7 +36,6 @@ function ActiveTrains() {
 
   return (
     <>
-    <button className='bg-black p-60' onClick={() => console.log(trains)}>ff</button>
     <Spinner loading={loading}/>
     <div className="border border-gray-300 rounded-md shadow-md p-4 bg-white max-w-[900px] mx-auto">
       

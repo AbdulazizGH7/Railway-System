@@ -26,7 +26,6 @@ function App() {
           <Route path="/WaitlistPromotion" element={<WaitlistPromotion />} />
           <Route path="/AssignDriverPage" element={<AssignDriverPage />} />
         </Route>
-
       </>
     )
   )

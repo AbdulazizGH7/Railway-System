@@ -28,15 +28,7 @@ const trainSchema = new mongoose.Schema({
           type: Date,  
           required: true  
         }  
-      },  
-    //   intermediateStations: [{  
-    //     station: {  
-    //       type: mongoose.Schema.Types.ObjectId,  
-    //       ref: 'Station'  
-    //     },  
-    //     arrivalTime: Date,  
-    //     departureTime: Date,  
-    //   }]  
+      },
     }, 
     assignedStaff: [{  
       staff: {  
@@ -50,3 +42,13 @@ const trainSchema = new mongoose.Schema({
 const Train = mongoose.model("Train", trainSchema)
 
 module.exports = Train
+
+
+    //   intermediateStations: [{  
+    //     station: {  
+    //       type: mongoose.Schema.Types.ObjectId,  
+    //       ref: 'Station'  
+    //     },  
+    //     arrivalTime: Date,  
+    //     departureTime: Date,  
+    //   }]  

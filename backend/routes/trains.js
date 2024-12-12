@@ -18,7 +18,8 @@ router.get('/today', async (req, res) => {
             'route.source.departureTime': {
                 $gte: startOfDay,
                 $lte: endOfDay
-            }
+            },
+            'status': 'active'
         }).populate({
             path: 'route.source.station',
             model: 'Station',
@@ -67,7 +68,7 @@ router.get('/today', async (req, res) => {
 router.get('/', async (req, res) => {
     try {
         // Get all trains with populated station information
-        const trains = await Train.find()
+        const trains = await Train.find({status: 'active'})
             .populate({
                 path: 'route.source.station',
                 model: 'Station',

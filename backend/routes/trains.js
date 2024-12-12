@@ -48,6 +48,7 @@ router.get('/today', async (req, res) => {
             const formattedDuration = `${hours}h ${minutes}m`;
 
             return {
+                _id: train._id,
                 from: sourceCity,
                 to: destCity,
                 departure: departureTime,

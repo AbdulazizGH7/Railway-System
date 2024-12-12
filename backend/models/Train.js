@@ -5,7 +5,8 @@ const trainSchema = new mongoose.Schema({
     nameEng: String,
     nameAr: String,
     totalSeats: Number,
-    distance: Number,  
+    distance: Number,
+    seatCost: Number,  
     route: {  
       source: {  
         station: {  

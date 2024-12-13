@@ -65,10 +65,6 @@ function ReservationsPage({ userType }) {
     });
   };
 
-  const handleAddReservation = () => {
-    // Navigate to the 'Add Reservation' page
-    navigate('/add-reservation-admin');
-  };
 
   return (
     <div className="flex flex-col items-center justify-start space-y-6 my-5">
@@ -81,15 +77,6 @@ function ReservationsPage({ userType }) {
         onChange={(e) => setSearchQuery(e.target.value)}
       />
 
-      {/* Add Reservation Button (Admin Only) */}
-      {isAdmin && (
-        <button
-          onClick={handleAddReservation}
-          className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 mt-4"
-        >
-          Add Reservation
-        </button>
-      )}
 
       {/* Cards Layout */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-10/12">

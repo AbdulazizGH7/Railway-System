@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { FaTrain, FaCalendarAlt, FaClock, FaChair } from "react-icons/fa";
 
 function TripsPage() {
   const [trips, setTrips] = useState([
@@ -66,7 +67,7 @@ function TripsPage() {
     <div className="flex flex-col items-center justify-start space-y-6 my-5">
       {/* Dropdown Menus */}
       <div className="flex justify-between items-center space-x-4 border-solid border-2 border-black w-10/12 p-2">
-      {/* Departure City Dropdown */}
+        {/* Departure City Dropdown */}
         <div>
           <label htmlFor="departure-city" className="mr-1">
             Departure City:
@@ -101,42 +102,49 @@ function TripsPage() {
         </div>
       </div>
 
-      {/* Trips Table */}
-      <table className="border-black border-solid border-2 table-auto w-10/12 text-left">
-        <thead>
-          <tr className="bg-gray-300">
-            <th className="px-4 py-2">From</th>
-            <th className="px-4 py-2">To</th>
-            <th className="px-4 py-2">Train</th>
-            <th className="px-4 py-2">Date</th>
-            <th className="px-4 py-2">Departure Time</th>
-            <th className="px-4 py-2">Arrival Time</th>
-            <th className="px-4 py-2">Available Seats</th>
-            <th className="px-4 py-2"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredTrips.map((trip, index) => (
-            <tr key={index} className="border-b odd:bg-slate-200 even:bg-slate-100">
-              <td className="px-4 py-2">{trip.from}</td>
-              <td className="px-4 py-2">{trip.to}</td>
-              <td className="px-4 py-2">{trip.trainEng}</td>
-              <td className="px-4 py-2">{trip.date}</td>
-              <td className="px-4 py-2">{trip.departureTime}</td>
-              <td className="px-4 py-2">{trip.arrivalTime}</td>
-              <td className="px-4 py-2">{trip.availableSeats}</td>
-              <td className="px-4 py-2">
-                <button
-                  className="bg-blue-500 text-white px-2 py-1 rounded"
-                  onClick={() => handleReserveClick(trip)}
-                >
-                  Reserve
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {/* Trips Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-10/12">
+        {filteredTrips.map((trip, index) => (
+          <div
+            key={index}
+            className="flex flex-col bg-white rounded-xl p-6 shadow-lg hover:scale-105 transition-transform duration-300"
+          >
+            <div className="flex flex-col space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-2xl font-semibold">{trip.from} to {trip.to}</span>
+                <FaTrain className="text-3xl text-blue-600" />
+              </div>
+
+              <div className="flex items-center space-x-2 text-sm">
+                <FaCalendarAlt className="text-blue-500" />
+                <span>{trip.date}</span>
+              </div>
+
+              <div className="flex items-center space-x-2 text-sm">
+                <FaClock className="text-green-500" />
+                <span>Departure: {trip.departureTime}</span>
+              </div>
+
+              <div className="flex items-center space-x-2 text-sm">
+                <FaClock className="text-red-500" />
+                <span>Arrival: {trip.arrivalTime}</span>
+              </div>
+
+              <div className="flex items-center space-x-2 text-sm">
+                <FaChair className="text-yellow-500" />
+                <span>{trip.availableSeats} Seats Available</span>
+              </div>
+
+              <button
+                className="bg-blue-500 text-white px-6 py-2 rounded-xl mt-4 text-lg font-semibold"
+                onClick={() => handleReserveClick(trip)}
+              >
+                Reserve
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

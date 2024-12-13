@@ -289,6 +289,10 @@ router.put('/pay/:reservationId', async (req, res) => {
         reservation.seatNumbers = newSeatNumbers;
         await reservation.save();
 
+        // Add loyalty points for the user
+        const user = await User.findById(reservation.passenger)
+        await user.addLoyaltyPoints(reservation.train.distance*reservation.seatsNum)
+
         res.json({
             message: 'Reservation confirmed successfully',
             seatNumbers: newSeatNumbers
@@ -303,5 +307,65 @@ router.put('/pay/:reservationId', async (req, res) => {
     }
 });
 
+// @desc deletes a reservation
+router.delete('/:reservationId', async (req, res) => {
+    try {
+        const { reservationId } = req.params;
+
+        // Find the reservation and populate train details
+        const reservation = await Reservation.findById(reservationId)
+            .populate('train');
+
+        if (!reservation) {
+            return res.status(404).json({
+                success: false,
+                message: 'Reservation not found'
+            });
+        }
+
+        // Store reservation details before deletion
+        const reservationStatus = reservation.status;
+        const seatsNum = reservation.seatsNum;
+        const trainId = reservation.train._id;
+
+        // If reservation is 'confirmed' or 'pending', increase available seats
+        if (reservationStatus === 'confirmed' || reservationStatus === 'pending') {
+            const train = await Train.findById(trainId);
+            
+            if (!train) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Associated train not found'
+                });
+            }
+
+            // Increase available seats
+            train.availableSeats += seatsNum;
+
+            // Ensure availableSeats doesn't exceed totalSeats
+            if (train.availableSeats > train.totalSeats) {
+                train.availableSeats = train.totalSeats;
+            }
+
+            await train.save();
+        }
+
+        // Delete the reservation
+        await Reservation.findByIdAndDelete(reservationId);
+
+        res.status(200).json({
+            success: true,
+            message: 'Reservation deleted successfully'
+        });
+
+    } catch (error) {
+        console.error('Error deleting reservation:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error deleting reservation',
+            error: error.message
+        });
+    }
+});
 
 module.exports = router;

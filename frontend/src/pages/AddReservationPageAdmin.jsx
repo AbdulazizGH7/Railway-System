@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
 import { FiUsers } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 
-function BookingPage() {
-  const { state } = useLocation(); // Get the selected trip passed from BookingPage
-  const navigate = useNavigate();
-
+function AddReservationPageAdmin() {
   const [numSeats, setNumSeats] = useState(1);
   const [dependents, setDependents] = useState([{ firstName: "", lastName: "" }]);
+  const [firstName, setFirstName] = useState(""); // State for first name
+  const [lastName, setLastName] = useState(""); // State for last name
+  const [nationalId, setNationalId] = useState(""); // State for National ID
   const [errors, setErrors] = useState({});
-  const [bookingStatus, setBookingStatus] = useState(""); // New state to track booking status
+  const [reservationStatus, setReservationStatus] = useState(""); // To track reservation status
+  const navigate = useNavigate(); // Initialize the useNavigate hook
 
   useEffect(() => {
     // Update dependents array when numSeats changes
@@ -20,13 +21,26 @@ function BookingPage() {
     setDependents(updatedDependents);
   }, [numSeats]);
 
-  const handleBookingSubmit = (e) => {
+  const handleReservationSubmit = (e) => {
     e.preventDefault();
     let newErrors = {};
 
+    // Validate National ID (should be 10 digits)
+    if (!nationalId || nationalId.length !== 10) {
+      newErrors.nationalId = "National ID is required and should be 10 digits.";
+    }
+
+    // Validate first name and last name
+    if (!firstName) {
+      newErrors.firstName = "First name is required.";
+    }
+    if (!lastName) {
+      newErrors.lastName = "Last name is required.";
+    }
+
     // Validate numSeats
-    if (numSeats < 1 || numSeats > state.trip.availableSeats) {
-      newErrors.numSeats = `Select between 1 and ${state.trip.availableSeats} seats.`;
+    if (numSeats < 1) {
+      newErrors.numSeats = "Please select at least one seat.";
     }
 
     // Validate dependents if seats > 1
@@ -43,14 +57,16 @@ function BookingPage() {
       return; // Stop form submission if errors
     }
 
-    // Set booking status to "Pending" while simulating booking process
-    setBookingStatus("Booking is pending...");
+    // Simulate reservation status
+    setReservationStatus("Reservation is pending...");
 
     // Simulate a delay (e.g., API call) and then update the status to "Confirmed"
     setTimeout(() => {
-      setBookingStatus("pending Booking!");
-      alert(`Booking is pending! ${numSeats} seat(s) reserved on ${state.trip.trainEng}.`);
-      navigate("/"); // Navigate back after booking
+      setReservationStatus("Reservation Confirmed!");
+      alert(`Reservation is pending! ${numSeats} seat(s) reserved.`);
+
+      // Navigate back to the Reservations page after reservation is confirmed
+      navigate("/reservations"); // Replace "/reservations" with your actual route path
     }, 2000); // Simulating a 2-second delay
   };
 
@@ -64,11 +80,60 @@ function BookingPage() {
     <div className="min-h-screen bg-gradient-to-b from-blue-200 to-white py-10 px-4">
       <div className="max-w-lg mx-auto bg-white p-8 rounded-xl shadow-2xl transition-all transform hover:scale-105 duration-300">
         <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
-          Reserve Your Seats for {state.trip.trainEng}
+          Add Reservation for Admin
         </h2>
 
-        <form onSubmit={handleBookingSubmit} className="space-y-6">
-          {/* Seats */}
+        <form onSubmit={handleReservationSubmit} className="space-y-6">
+          {/* National ID */}
+          <div className="space-y-2">
+            <label htmlFor="nationalId" className="block text-lg font-medium text-gray-700">
+              National ID
+            </label>
+            <input
+              type="text"
+              id="nationalId"
+              value={nationalId}
+              onChange={(e) => setNationalId(e.target.value)}
+              maxLength="10"
+              required
+              className="w-full px-4 py-3 border rounded-lg text-lg transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none transform hover:scale-105 duration-200"
+            />
+            {errors.nationalId && <p className="text-red-500 text-sm mt-1">{errors.nationalId}</p>}
+          </div>
+
+          {/* First Name */}
+          <div className="space-y-2">
+            <label htmlFor="firstName" className="block text-lg font-medium text-gray-700">
+              First Name
+            </label>
+            <input
+              type="text"
+              id="firstName"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              required
+              className="w-full px-4 py-3 border rounded-lg text-lg transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none transform hover:scale-105 duration-200"
+            />
+            {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>}
+          </div>
+
+          {/* Last Name */}
+          <div className="space-y-2">
+            <label htmlFor="lastName" className="block text-lg font-medium text-gray-700">
+              Last Name
+            </label>
+            <input
+              type="text"
+              id="lastName"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              required
+              className="w-full px-4 py-3 border rounded-lg text-lg transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none transform hover:scale-105 duration-200"
+            />
+            {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>}
+          </div>
+
+          {/* Number of Seats */}
           <div className="space-y-2">
             <label htmlFor="numSeats" className="block text-lg font-medium text-gray-700">
               <FiUsers className="inline-block mr-2 text-blue-600" /> Number of Seats
@@ -79,7 +144,6 @@ function BookingPage() {
               value={numSeats}
               onChange={(e) => setNumSeats(parseInt(e.target.value))}
               min="1"
-              max={state.trip.availableSeats}
               required
               className="w-full px-4 py-3 border rounded-lg text-lg transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none transform hover:scale-105 duration-200"
             />
@@ -125,14 +189,14 @@ function BookingPage() {
             type="submit"
             className="w-full bg-blue-600 text-white text-lg py-3 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all transform hover:scale-105 duration-200"
           >
-            Pending Booking
+            Add Reservation
           </button>
         </form>
 
-        {/* Booking Status Message */}
-        {bookingStatus && (
-          <div className="mt-6 text-center text-lg font-medium text-gray-800">
-            {bookingStatus}
+        {/* Reservation Status Message */}
+        {reservationStatus && (
+          <div className="mt-6 text-center text-xl font-medium text-gray-800">
+            {reservationStatus}
           </div>
         )}
       </div>
@@ -140,4 +204,4 @@ function BookingPage() {
   );
 }
 
-export default BookingPage;
+export default AddReservationPageAdmin;

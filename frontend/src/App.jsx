@@ -9,6 +9,7 @@ import PaymentPage from "./pages/PaymentPage";
 import ReservationsPage from "./pages/ReservationsPage";
 import WaitlistPromotion from "./pages/WaitlistPromotion";
 import AssignDriverPage from"./pages/AssignDriverPage"
+import AddReservationPageAdmin from "./pages/AddReservationPageAdmin";
 
 function App() {
   const router = createBrowserRouter(
@@ -21,6 +22,7 @@ function App() {
           <Route path="/" element={<HomePage userType={"Admin"}/>}/>
           <Route path="/booking" element={<TripsPage/>}/>
           <Route path="/reservations" element={<ReservationsPage userType={"Admin"}/>}/>
+          <Route path="/add-reservation-admin" element={<AddReservationPageAdmin/>}/>
           <Route path="/reserve" element={<BookingPage />} />
           <Route path="/payment" element={<PaymentPage />} />
           <Route path="/WaitlistPromotion" element={<WaitlistPromotion />} />

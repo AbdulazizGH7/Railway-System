@@ -3,6 +3,7 @@ const router = express.Router();
 const moment = require('moment');
 const Train = require('../models/Train');
 const Reservation = require('../models/Reservation');
+const User = require('../models/User')
 const Station = require('../models/Station');
 
 // @desc return all the trains traveling today
@@ -65,6 +66,7 @@ router.get('/today', async (req, res) => {
     }
 });
 
+// @desc return all the trains 
 router.get('/', async (req, res) => {
     try {
         const isAdmin = req.query.role === 'admin'
@@ -111,5 +113,213 @@ router.get('/', async (req, res) => {
         });
     }
 });
+
+// @desc assigns a staff to a train
+router.put('/assign-staff/:trainId', async (req, res) => {
+    try {
+        const { trainId } = req.params;
+        const { driverId, engineerId } = req.body;
+
+        // Check if at least one staff member is provided
+        if (!driverId && !engineerId) {
+            return res.status(400).json({
+                success: false,
+                message: 'At least one staff member (driver or engineer) must be provided'
+            });
+        }
+
+        // Find the train
+        const train = await Train.findById(trainId);
+        if (!train) {
+            return res.status(404).json({
+                success: false,
+                message: 'Train not found'
+            });
+        }
+
+        // Initialize update object
+        const updateStaff = {};
+
+        // If driverId is provided, verify driver exists and is a driver
+        if (driverId) {
+            const driver = await User.findOne({ 
+                _id: driverId, 
+                role: 'driver'
+            });
+
+            if (!driver) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid driver ID or user is not a driver'
+                });
+            }
+
+            updateStaff['assignedStaff.driver'] = driverId;
+        }
+
+        // If engineerId is provided, verify engineer exists and is an engineer
+        if (engineerId) {
+            const engineer = await User.findOne({ 
+                _id: engineerId, 
+                role: 'engineer'
+            });
+
+            if (!engineer) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid engineer ID or user is not an engineer'
+                });
+            }
+
+            updateStaff['assignedStaff.engineer'] = engineerId;
+        }
+
+        // Update the train with new staff assignments
+        const updatedTrain = await Train.findByIdAndUpdate(
+            trainId,
+            { $set: updateStaff },
+            { 
+                new: true,
+                runValidators: true 
+            }
+        ).populate('assignedStaff.driver assignedStaff.engineer');
+
+        // Prepare response message
+        let message = 'Staff assigned successfully: ';
+        if (driverId) message += 'Driver ';
+        if (driverId && engineerId) message += 'and ';
+        if (engineerId) message += 'Engineer ';
+        message += 'updated';
+
+        res.status(200).json({
+            success: true,
+            message,
+            train: {
+                id: updatedTrain._id,
+                nameEng: updatedTrain.nameEng,
+                nameAr: updatedTrain.nameAr,
+                assignedStaff: {
+                    driver: updatedTrain.assignedStaff.driver ? {
+                        id: updatedTrain.assignedStaff.driver._id,
+                        firstName: updatedTrain.assignedStaff.driver.firstName,
+                        lastName: updatedTrain.assignedStaff.driver.lastName
+                    } : null,
+                    engineer: updatedTrain.assignedStaff.engineer ? {
+                        id: updatedTrain.assignedStaff.engineer._id,
+                        firstName: updatedTrain.assignedStaff.engineer.firstName,
+                        lastName: updatedTrain.assignedStaff.engineer.lastName
+                    } : null
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('Error assigning staff:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error assigning staff to train',
+            error: error.message
+        });
+    }
+});
+
+// @desc return all the stations in the path with arrival time
+router.get('/stations', async (req, res) => {
+    try {
+        // Find all trains and populate source and destination stations
+        const trains = await Train.find()
+            .populate({
+                path: 'route.source.station',
+                model: 'Station'
+            })
+            .populate({
+                path: 'route.destination.station',
+                model: 'Station',
+            });
+
+        if (!trains || trains.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'No trains found'
+            });
+        }
+
+        // Process each train's route
+        const trainsWithRoutes = await Promise.all(trains.map(async (train) => {
+            const routeStations = [];
+            let currentStation = train.route.source.station;
+            let stationCount = 0;
+            
+            // Calculate total time of journey in milliseconds
+            const totalJourneyTime = train.route.destination.arrivalTime - train.route.source.departureTime;
+            
+            while (currentStation) {
+                // Add station to route
+                const isSource = currentStation._id.toString() === train.route.source.station._id.toString();
+                const isDestination = currentStation._id.toString() === train.route.destination.station._id.toString();
+                
+                let stationTime;
+                if (isSource) {
+                    stationTime = train.route.source.departureTime;
+                } else if (isDestination) {
+                    stationTime = train.route.destination.arrivalTime;
+                } else {
+                    // Calculate estimated time for intermediate station
+                    // This assumes equal time distribution between stations
+                    const progress = stationCount / (routeStations.length + 1);
+                    stationTime = new Date(train.route.source.departureTime.getTime() + (totalJourneyTime * progress));
+                }
+
+                routeStations.push({
+                    stationId: currentStation._id,
+                    city: currentStation.city,
+                    estimatedTime: stationTime,
+                    type: isSource ? 'departure' : (isDestination ? 'arrival' : 'intermediate')
+                });
+
+                // If the current station is the destination, stop
+                if (isDestination) {
+                    break;
+                }
+
+                // Find the next station in the route
+                currentStation = await Station.findById(currentStation.toStation);
+                stationCount++;
+
+                // If no next station is found, break to avoid infinite loops
+                if (!currentStation) {
+                    return {
+                        id: train._id,
+                        nameEng: train.nameEng,
+                        nameAr: train.nameAr,
+                        error: 'Route is incomplete. Could not find the next station.'
+                    };
+                }
+            }
+
+            return {
+                id: train._id,
+                nameEng: train.nameEng,
+                nameAr: train.nameAr,
+                totalStations: routeStations.length,
+                stations: routeStations
+            };
+        }));
+
+        res.status(200).json({
+            success: true,
+            trains: trainsWithRoutes
+        });
+
+    } catch (error) {
+        console.error('Error fetching route stations:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching route stations',
+            error: error.message
+        });
+    }
+});
+
 
 module.exports = router;

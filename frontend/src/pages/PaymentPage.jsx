@@ -7,14 +7,14 @@ function PaymentPage() {
   const navigate = useNavigate(); 
   const [paymentAmount, setPaymentAmount] = useState(0);
 
-  // Calculate payment based on the number of seats and luggage
+  // Calculate payment based on the number of seats
   useEffect(() => {
     const seatPrice = 50; // Example price per seat
-    const luggagePrice = 10; // Example price per luggage
+    
 
-    // Payment calculation: seats * price + luggage * price
+    // Payment calculation: seats * price * price
     const totalAmount =
-      state.numSeats * seatPrice + state.numLuggage * luggagePrice;
+      state.numSeats * seatPrice;
     setPaymentAmount(totalAmount);
   }, [state]);
 
@@ -46,14 +46,6 @@ function PaymentPage() {
             <span>Seats Reserved:</span>
             <span className="font-semibold">{state.numSeats}</span>
           </div>
-          <div className="flex justify-between items-center text-lg text-gray-600 mb-2">
-            <span>Luggage:</span>
-            <span className="font-semibold">{state.numLuggage}</span>
-          </div>
-          <div className="flex justify-between items-center text-lg text-gray-600 mb-4">
-            <span>Luggage Weight:</span>
-            <span className="font-semibold">{state.luggageWeight} kg</span>
-          </div>
         </div>
 
         {/* Payment Summary */}
@@ -64,7 +56,7 @@ function PaymentPage() {
             <span className="text-2xl font-bold text-green-600">﷼{paymentAmount}</span>
           </div>
           <p className="text-gray-600 text-sm mb-6">
-            * Includes taxes and fees for luggage. The final payment may vary based on your selection.
+            * Includes taxes and fees for Seats. The final payment may vary based on your selection.
           </p>
         </div>
 

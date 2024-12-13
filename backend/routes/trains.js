@@ -93,6 +93,7 @@ router.get('/', async (req, res) => {
 
         // Format the response
         const formattedTrains = trains.map(train => ({
+            _id: train._id,
             from: train.route.source.station.city,
             to: train.route.destination.station.city,
             trainNameEng: train.nameEng,

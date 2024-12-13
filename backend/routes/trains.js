@@ -312,7 +312,7 @@ router.get('/stations', async (req, res) => {
             }
 
             return {
-                id: train._id,
+                _id: train._id,
                 nameEng: train.nameEng,
                 nameAr: train.nameAr,
                 totalStations: routeStations.length,

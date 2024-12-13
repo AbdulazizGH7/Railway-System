@@ -67,7 +67,6 @@ router.get('/today', async (req, res) => {
 });
 
 // @desc return all the trains 
-// @desc return all the trains 
 router.get('/', async (req, res) => {
     try {
         const isAdmin = req.query.role === 'admin'

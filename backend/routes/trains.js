@@ -223,5 +223,103 @@ router.put('/assign-staff/:trainId', async (req, res) => {
     }
 });
 
+// @desc return all the stations in the path with arrival time
+router.get('/stations', async (req, res) => {
+    try {
+        // Find all trains and populate source and destination stations
+        const trains = await Train.find()
+            .populate({
+                path: 'route.source.station',
+                model: 'Station'
+            })
+            .populate({
+                path: 'route.destination.station',
+                model: 'Station',
+            });
+
+        if (!trains || trains.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'No trains found'
+            });
+        }
+
+        // Process each train's route
+        const trainsWithRoutes = await Promise.all(trains.map(async (train) => {
+            const routeStations = [];
+            let currentStation = train.route.source.station;
+            let stationCount = 0;
+            
+            // Calculate total time of journey in milliseconds
+            const totalJourneyTime = train.route.destination.arrivalTime - train.route.source.departureTime;
+            
+            while (currentStation) {
+                // Add station to route
+                const isSource = currentStation._id.toString() === train.route.source.station._id.toString();
+                const isDestination = currentStation._id.toString() === train.route.destination.station._id.toString();
+                
+                let stationTime;
+                if (isSource) {
+                    stationTime = train.route.source.departureTime;
+                } else if (isDestination) {
+                    stationTime = train.route.destination.arrivalTime;
+                } else {
+                    // Calculate estimated time for intermediate station
+                    // This assumes equal time distribution between stations
+                    const progress = stationCount / (routeStations.length + 1);
+                    stationTime = new Date(train.route.source.departureTime.getTime() + (totalJourneyTime * progress));
+                }
+
+                routeStations.push({
+                    stationId: currentStation._id,
+                    city: currentStation.city,
+                    estimatedTime: stationTime,
+                    type: isSource ? 'departure' : (isDestination ? 'arrival' : 'intermediate')
+                });
+
+                // If the current station is the destination, stop
+                if (isDestination) {
+                    break;
+                }
+
+                // Find the next station in the route
+                currentStation = await Station.findById(currentStation.toStation);
+                stationCount++;
+
+                // If no next station is found, break to avoid infinite loops
+                if (!currentStation) {
+                    return {
+                        id: train._id,
+                        nameEng: train.nameEng,
+                        nameAr: train.nameAr,
+                        error: 'Route is incomplete. Could not find the next station.'
+                    };
+                }
+            }
+
+            return {
+                id: train._id,
+                nameEng: train.nameEng,
+                nameAr: train.nameAr,
+                totalStations: routeStations.length,
+                stations: routeStations
+            };
+        }));
+
+        res.status(200).json({
+            success: true,
+            trains: trainsWithRoutes
+        });
+
+    } catch (error) {
+        console.error('Error fetching route stations:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching route stations',
+            error: error.message
+        });
+    }
+});
+
 
 module.exports = router;

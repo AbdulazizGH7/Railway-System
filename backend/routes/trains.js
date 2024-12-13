@@ -67,6 +67,7 @@ router.get('/today', async (req, res) => {
 
 router.get('/', async (req, res) => {
     try {
+        const isAdmin = req.query.role === 'admin'
         // Get all active trains with populated station information
         const trains = await Train.find({ status: 'active' })
             .populate({
@@ -98,7 +99,7 @@ router.get('/', async (req, res) => {
             departureTime: moment(train.route.source.departureTime).format('HH:mm'),
             arrivalTime: moment(train.route.destination.arrivalTime).format('HH:mm'),
             // Show 0 seats if train has waitlisted reservations
-            availableSeats: waitlistedTrainIds.has(train._id.toString()) ? 0 : train.availableSeats
+            availableSeats: isAdmin ? train.availableSeats : (waitlistedTrainIds.has(train._id.toString()) ? 0 : train.availableSeats)
         }));
 
         res.json(formattedTrains);

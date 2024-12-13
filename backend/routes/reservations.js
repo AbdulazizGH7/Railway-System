@@ -238,7 +238,7 @@ router.put('/pay/:reservationId', async (req, res) => {
 
         // Find the reservation
         const reservation = await Reservation.findById(reservationId)
-        .populate('train')
+            .populate('train');
 
         if (!reservation) {
             return res.status(404).json({ error: 'Reservation not found' });
@@ -260,13 +260,32 @@ router.put('/pay/:reservationId', async (req, res) => {
             });
         }
 
-        // Update reservation status to confirmed
+        // Find the highest seat number currently assigned for this train
+        const highestSeatReservation = await Reservation.findOne({
+            train: reservation.train._id,
+            status: 'confirmed',
+            seatNumbers: { $exists: true, $ne: [] }
+        }).sort({ 'seatNumbers': -1 });
+
+        let lastSeatNumber = 0;
+        if (highestSeatReservation && highestSeatReservation.seatNumbers.length > 0) {
+            lastSeatNumber = Math.max(...highestSeatReservation.seatNumbers);
+        }
+
+        // Generate new seat numbers
+        const newSeatNumbers = [];
+        for (let i = 0; i < reservation.seatsNum; i++) {
+            newSeatNumbers.push(lastSeatNumber + 1 + i);
+        }
+
+        // Update reservation
         reservation.status = 'confirmed';
+        reservation.seatNumbers = newSeatNumbers;
         await reservation.save();
 
         res.json({
             message: 'Reservation confirmed successfully',
-            reservation
+            seatNumbers: newSeatNumbers
         });
 
     } catch (error) {

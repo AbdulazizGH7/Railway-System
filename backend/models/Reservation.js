@@ -23,6 +23,9 @@ const reservationSchema = new mongoose.Schema({
     dependents:[{
       firstName: String,
       lastName: String
+    }],
+    seatNumbers: [{
+      type: Number
     }],   
     createdAt: {    
       type: Date,    

@@ -67,6 +67,7 @@ router.get('/today', async (req, res) => {
 });
 
 // @desc return all the trains 
+// @desc return all the trains 
 router.get('/', async (req, res) => {
     try {
         const isAdmin = req.query.role === 'admin'
@@ -92,18 +93,31 @@ router.get('/', async (req, res) => {
         const waitlistedTrainIds = new Set(waitlistedReservations.map(id => id.toString()));
 
         // Format the response
-        const formattedTrains = trains.map(train => ({
-            _id: train._id,
-            from: train.route.source.station.city,
-            to: train.route.destination.station.city,
-            trainNameEng: train.nameEng,
-            trainNameAr: train.nameAr,
-            date: moment(train.route.source.departureTime).format('YYYY-MM-DD'),
-            departureTime: moment(train.route.source.departureTime).format('HH:mm'),
-            arrivalTime: moment(train.route.destination.arrivalTime).format('HH:mm'),
-            // Show 0 seats if train has waitlisted reservations
-            availableSeats: isAdmin ? train.availableSeats : (waitlistedTrainIds.has(train._id.toString()) ? 0 : train.availableSeats)
-        }));
+        const formattedTrains = trains.map(train => {
+            // Calculate duration
+            const duration = moment.duration(
+                moment(train.route.destination.arrivalTime).diff(
+                    moment(train.route.source.departureTime)
+                )
+            );
+            const hours = Math.floor(duration.asHours());
+            const minutes = duration.minutes();
+            const formattedDuration = `${hours}h ${minutes}m`;
+
+            return {
+                _id: train._id,
+                from: train.route.source.station.city,
+                to: train.route.destination.station.city,
+                trainNameEng: train.nameEng,
+                trainNameAr: train.nameAr,
+                date: moment(train.route.source.departureTime).format('YYYY-MM-DD'),
+                departureTime: moment(train.route.source.departureTime).format('HH:mm'),
+                arrivalTime: moment(train.route.destination.arrivalTime).format('HH:mm'),
+                duration: formattedDuration, // Added duration field
+                // Show 0 seats if train has waitlisted reservations
+                availableSeats: isAdmin ? train.availableSeats : (waitlistedTrainIds.has(train._id.toString()) ? 0 : train.availableSeats)
+            };
+        });
 
         res.json(formattedTrains);
     } catch (error) {

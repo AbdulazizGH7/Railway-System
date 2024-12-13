@@ -167,8 +167,14 @@ router.post('/', async (req, res) => {
             return res.status(404).json({ error: 'Train not found' });
         }
 
+        // Check if there are any waitlisted reservations
+        const existingWaitlistedReservations = await Reservation.findOne({
+            train: trainId,
+            status: 'waitlisted'
+        });
+
         // Calculate reservation cost based on seat cost and number of seats
-        const getDiscount = () =>{
+        const getDiscount = () => {
             if(passengerUser.loyaltyTier === 'Gold')
                 return 0.75
             else if(passengerUser.loyaltyTier === 'Silver')
@@ -190,9 +196,19 @@ router.post('/', async (req, res) => {
             dependents
         };
 
+        // If there are waitlisted reservations or no available seats, waitlist the new reservation
+        if (existingWaitlistedReservations || train.availableSeats === 0) {
+            reservationData.status = 'waitlisted';
+            const reservation = await Reservation.create(reservationData);
+
+            return res.status(201).json({
+                message: 'Reservation waitlisted',
+                reservation
+            });
+        }
+
         // Check if there are enough available seats
         if (train.availableSeats >= seatsNum) {
-
             if(user.role === 'admin'){
                 reservationData.status = 'confirmed'
                 await passengerUser.addLoyaltyPoints(train.distance);
@@ -210,15 +226,6 @@ router.post('/', async (req, res) => {
 
             return res.status(201).json({
                 message: 'Reservation created successfully',
-                reservation
-            });
-        } else if (train.availableSeats === 0) {
-            // No seats available - create waitlisted reservation
-            reservationData.status = 'waitlisted';
-            const reservation = await Reservation.create(reservationData);
-
-            return res.status(201).json({
-                message: 'Reservation waitlisted',
                 reservation
             });
         } else {

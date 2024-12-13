@@ -1,12 +1,5 @@
 const mongoose = require('mongoose');
 
-const LOYALTY_TIERS = {
-  REGULAR: 'Regular',
-  GREEN: 'Green',
-  SILVER: 'Silver',
-  GOLD: 'Gold'
-};
-
 const TIER_THRESHOLDS = {
   GREEN: 10000,   // 10K miles
   SILVER: 50000,  // 50K miles
@@ -73,7 +66,4 @@ userSchema.methods.addLoyaltyPoints = function(points) {
   
 const User = mongoose.model('User', userSchema);  
 
-module.exports = {
-  User,
-  LOYALTY_TIERS,
-};
+module.exports = User;

@@ -16,7 +16,8 @@ router.get('/', async (req, res) => {
                     path: 'route.source.station route.destination.station',
                     select: 'city'
                 }
-            });
+            })
+            .populate('passenger', 'nationalId');
 
         const formattedReservations = reservations.map(reservation => {
             const departureTime = moment(reservation.train.route.source.departureTime);
@@ -70,7 +71,8 @@ router.get('/:passengerId', async (req, res) => {
                 path: 'route.source.station route.destination.station',
                 select: 'city'
             }
-        });
+        })
+        .populate('passenger', 'nationalId');
 
         if (reservations.length === 0) {
             return res.status(404).json({ 

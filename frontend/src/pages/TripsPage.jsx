@@ -1,142 +1,133 @@
-import React, { useState } from "react";
+import React, { useState, useMemo,useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { 
+  FaSearch, 
+} from 'react-icons/fa';
+
+import axios from 'axios';
+import SearchPanel from "../components/SearchPanel";
+import trainService from "../components/trainService";
+import TripCard from "../components/TripCard";
+
+
+
+
 
 function TripsPage() {
-  const [trips, setTrips] = useState([
-    {
-      from: "Riyadh",
-      to: "Jeddah",
-      trainEng: "Express 101",
-      date: "2024-12-04",
-      departureTime: "08:00 AM",
-      arrivalTime: "12:00 PM",
-      availableSeats: 10,
-    },
-    {
-      from: "Jeddah",
-      to: "Mecca",
-      trainEng: "Express 202",
-      date: "2024-12-04",
-      departureTime: "09:00 AM",
-      arrivalTime: "10:00 AM",
-      availableSeats: 20,
-    },
-    {
-      from: "Dammam",
-      to: "Riyadh",
-      trainEng: "Express 303",
-      date: "2024-12-05",
-      departureTime: "06:00 AM",
-      arrivalTime: "09:00 AM",
-      availableSeats: 5,
-    },
-    {
-      from: "Mecca",
-      to: "Jeddah",
-      trainEng: "Express 404",
-      date: "2024-12-06",
-      departureTime: "11:00 AM",
-      arrivalTime: "12:00 PM",
-      availableSeats: 15,
-    },
-  ]);
-
-  const [selectedCity, setSelectedCity] = useState(""); // State for selected city
-  const [selectedDate, setSelectedDate] = useState(""); // State for selected date
-  const [selectedTrip, setSelectedTrip] = useState(null);
-
-  const cities = ["Riyadh", "Jeddah", "Dammam", "Mecca"]; // Example cities
-  const dates = ["2024-12-04", "2024-12-05", "2024-12-06"]; // Example dates
-
-  const filteredTrips = trips.filter((trip) => {
-    return (
-      (!selectedCity || trip.from === selectedCity) &&
-      (!selectedDate || trip.date === selectedDate)
-    );
-  });
-
+  const [trips, setTrips] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [fromCity, setFromCity] = useState("");
+  const [toCity, setToCity] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
+  const [filteredTrips, setFilteredTrips] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
   const navigate = useNavigate();
 
-  const handleReserveClick = (trip) => {
-    setSelectedTrip(trip);
-    navigate("/reserve", { state: { trip: trip } });
+  useEffect(() => {
+    fetchTrips();
+  }, []);
+
+  const fetchTrips = async () => {
+    try {
+      setLoading(true);
+      const data = await trainService.getAllTrains();
+      setTrips(data); // This will now receive data.response from the service
+      setFilteredTrips(data); // This will now receive data.response from the service
+    } catch (err) {
+      setError('Failed to fetch trips');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  return (
-    <div className="flex flex-col items-center justify-start space-y-6 my-5">
-      {/* Dropdown Menus */}
-      <div className="flex justify-between items-center space-x-4 border-solid border-2 border-black w-10/12 p-2">
-      {/* Departure City Dropdown */}
-        <div>
-          <label htmlFor="departure-city" className="mr-1">
-            Departure City:
-          </label>
-          <select
-            id="departure-city"
-            className="border rounded px-4 py-2"
-            value={selectedCity}
-            onChange={(e) => setSelectedCity(e.target.value)}
-          >
-            <option value="">All Cities</option>
-            {cities.map((city, index) => (
-              <option key={index} value={city}>
-                {city}
-              </option>
-            ))}
-          </select>
-        </div>
+  const cities = useMemo(() => 
+    [...new Set(trips.map(trip => trip.from))],
+    [trips]
+  );
 
-        {/* Date Dropdown */}
-        <div>
-          <label htmlFor="departure-date" className="mr-1">
-            Departure Date:
-          </label>
-          <input
-            id="departure-date"
-            type="date"
-            className="border rounded px-4 py-2"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-          />
+  const availableDestinations = useMemo(() => {
+    if (!fromCity) return [];
+    return [...new Set(
+      trips
+        .filter(trip => trip.from === fromCity)
+        .map(trip => trip.to)
+    )];
+  }, [trips, fromCity]);
+
+  const handleSearch = () => {
+    setIsSearching(true);
+    const filtered = trips.filter((trip) => {
+      const fromMatch = !fromCity || trip.from === fromCity;
+      const toMatch = !toCity || trip.to === toCity;
+      const dateMatch = !selectedDate || trip.date === selectedDate;
+      return fromMatch && toMatch && dateMatch;
+    });
+    setFilteredTrips(filtered);
+  };
+
+  const handleReserve = (trip) => {
+    navigate("/reserve", { state: { trip } });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-8 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading trips...</p>
         </div>
       </div>
+    );
+  }
 
-      {/* Trips Table */}
-      <table className="border-black border-solid border-2 table-auto w-10/12 text-left">
-        <thead>
-          <tr className="bg-gray-300">
-            <th className="px-4 py-2">From</th>
-            <th className="px-4 py-2">To</th>
-            <th className="px-4 py-2">Train</th>
-            <th className="px-4 py-2">Date</th>
-            <th className="px-4 py-2">Departure Time</th>
-            <th className="px-4 py-2">Arrival Time</th>
-            <th className="px-4 py-2">Available Seats</th>
-            <th className="px-4 py-2"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredTrips.map((trip, index) => (
-            <tr key={index} className="border-b odd:bg-slate-200 even:bg-slate-100">
-              <td className="px-4 py-2">{trip.from}</td>
-              <td className="px-4 py-2">{trip.to}</td>
-              <td className="px-4 py-2">{trip.trainEng}</td>
-              <td className="px-4 py-2">{trip.date}</td>
-              <td className="px-4 py-2">{trip.departureTime}</td>
-              <td className="px-4 py-2">{trip.arrivalTime}</td>
-              <td className="px-4 py-2">{trip.availableSeats}</td>
-              <td className="px-4 py-2">
-                <button
-                  className="bg-blue-500 text-white px-2 py-1 rounded"
-                  onClick={() => handleReserveClick(trip)}
-                >
-                  Reserve
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-8 flex items-center justify-center">
+        <div className="text-center text-red-600">
+          <p>{error}</p>
+          <button 
+            onClick={fetchTrips}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-8">
+      <div className="max-w-6xl mx-auto">
+        <SearchPanel 
+          fromCity={fromCity}
+          setFromCity={setFromCity}
+          toCity={toCity}
+          setToCity={setToCity}
+          selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
+          cities={cities}
+          availableDestinations={availableDestinations}
+          onSearch={handleSearch}
+        />
+
+        <div className="space-y-4">
+          {isSearching && filteredTrips.length === 0 ? (
+            <div className="text-center py-8 bg-white rounded-lg shadow-sm">
+              <FaSearch className="mx-auto text-4xl text-gray-400 mb-4" />
+              <p className="text-gray-500">No trips found matching your criteria</p>
+            </div>
+          ) : (
+            filteredTrips.map((trip, index) => (<TripCard 
+              key={index} 
+              trip={trip}
+            />
+          ))
+          )}
+        </div>
+      </div>
     </div>
   );
 }

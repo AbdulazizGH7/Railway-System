@@ -2,55 +2,27 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 
-//@desc GET all drivers (first and last names only)
-router.get('/drivers', async (req, res) => {
+//@desc GET all drivers and engineers (first and last names only)
+router.get('/staff', async (req, res) => {
     try {
-        const drivers = await User.find({ role: 'driver' })
-            .select('firstName lastName') 
+        // Fetch both drivers and engineers in parallel using Promise.all
+        const [drivers, engineers] = await Promise.all([
+            User.find({ role: 'driver' }).select('firstName lastName'),
+            User.find({ role: 'engineer' }).select('firstName lastName')
+        ]);
 
-        if (!drivers.length) {
-            return res.status(404).json({
-                success: false,
-                message: 'No drivers found'
-            });
-        }
-
-        res.status(200).json({
+        const response = {
             success: true,
-            drivers
-        });
-
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            message: 'Error retrieving drivers',
-            error: error.message
-        });
-    }
-});
-
-//@desc GET all engineers (first and last names only)
-router.get('/engineers', async (req, res) => {
-    try {
-        const engineers = await User.find({ role: 'engineer' })
-            .select('firstName lastName') 
-
-        if (!engineers.length) {
-            return res.status(404).json({
-                success: false,
-                message: 'No engineers found'
-            });
-        }
-
-        res.status(200).json({
-            success: true,
+            drivers,
             engineers
-        });
+        };
+
+        res.status(200).json(response);
 
     } catch (error) {
         res.status(500).json({
             success: false,
-            message: 'Error retrieving engineers',
+            message: 'Error retrieving staff members',
             error: error.message
         });
     }

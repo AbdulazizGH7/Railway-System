@@ -3,6 +3,7 @@ const mongoose = require('mongoose')
 const cors = require('cors');
 const trains = require('./routes/trains')
 const reservations = require('./routes/reservations')
+const users = require('./routes/users')
 const PORT = process.env.PORT || 9000
 
 const app = express()
@@ -22,3 +23,4 @@ mongoose.connect(process.env.DB_LINK)
 
 app.use('/api/trains', trains)
 app.use('/api/reservations', reservations)
+app.use('/api/users', users)

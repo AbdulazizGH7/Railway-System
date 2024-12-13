@@ -27,14 +27,16 @@ router.get('/', async (req, res) => {
             const hours = Math.floor(duration.asHours());
             const minutes = duration.minutes();
             const formattedDuration = `${hours}h ${minutes.toString().padStart(2, '0')}m`;
+            const paymentDeadline = moment(reservation.paymentDeadline);
 
             return {
                 reservationId: reservation._id,
-                passengerId: reservation.passenger._id,
+                passengerId: reservation.passenger.nationalId,
                 from: reservation.train.route.source.station.city,
                 to: reservation.train.route.destination.station.city,
                 date: departureTime.format('YYYY-MM-DD'),
                 status: reservation.status,
+                paymentDeadline: paymentDeadline.format('YYYY:MM:DD HH:mm'),
                 departureTime: departureTime.format('HH:mm'),
                 arrivalTime: arrivalTime.format('HH:mm'),
                 duration: formattedDuration
@@ -79,6 +81,7 @@ router.get('/:passengerId', async (req, res) => {
         const formattedReservations = reservations.map(reservation => {
             const departureTime = moment(reservation.train.route.source.departureTime);
             const arrivalTime = moment(reservation.train.route.destination.arrivalTime);
+            const paymentDeadline = moment(reservation.paymentDeadline);
 
             // Calculate duration
             const duration = moment.duration(arrivalTime.diff(departureTime));
@@ -88,11 +91,12 @@ router.get('/:passengerId', async (req, res) => {
 
             return {
                 reservationId: reservation._id,
-                passengerId: reservation.passenger._id,
+                passengerId: reservation.passenger.nationalId,
                 from: reservation.train.route.source.station.city,
                 to: reservation.train.route.destination.station.city,
                 date: departureTime.format('YYYY-MM-DD'),
                 status: reservation.status,
+                paymentDeadline: paymentDeadline.format('YYYY:MM:DD HH:mm'),
                 departureTime: departureTime.format('HH:mm'),
                 arrivalTime: arrivalTime.format('HH:mm'),
                 duration: formattedDuration

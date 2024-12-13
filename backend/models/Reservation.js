@@ -76,7 +76,7 @@ reservationSchema.pre('save', async function(next) {
   } catch (error) {
       next(error);
   }
-});  
+});
 
 const Reservation = mongoose.model("Reservation", reservationSchema)  
 

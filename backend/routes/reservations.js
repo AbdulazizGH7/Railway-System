@@ -231,5 +231,52 @@ router.post('/', async (req, res) => {
     }
 });
 
+// @desc confirms a reservation
+router.put('/pay/:reservationId', async (req, res) => {
+    try {
+        const { reservationId } = req.params;
+
+        // Find the reservation
+        const reservation = await Reservation.findById(reservationId)
+        .populate('train')
+
+        if (!reservation) {
+            return res.status(404).json({ error: 'Reservation not found' });
+        }
+
+        // Check if payment deadline has passed
+        const now = new Date();
+        if (now > reservation.paymentDeadline) {
+            return res.status(400).json({ 
+                error: 'Payment deadline has passed. Cannot confirm reservation.' 
+            });
+        }
+
+        // Check if train departure time has passed
+        const departureTime = new Date(reservation.train.route.source.departureTime);
+        if (now > departureTime) {
+            return res.status(400).json({ 
+                error: 'Train has already departed. Cannot confirm reservation.' 
+            });
+        }
+
+        // Update reservation status to confirmed
+        reservation.status = 'confirmed';
+        await reservation.save();
+
+        res.json({
+            message: 'Reservation confirmed successfully',
+            reservation
+        });
+
+    } catch (error) {
+        console.error('Error confirming reservation:', error);
+        res.status(500).json({
+            error: 'Internal server error',
+            details: error.message
+        });
+    }
+});
+
 
 module.exports = router;

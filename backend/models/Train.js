@@ -4,9 +4,15 @@ const mongoose = require('mongoose')
 const trainSchema = new mongoose.Schema({  
     nameEng: String,
     nameAr: String,
-    totalSeats: Number,
     distance: Number,
     seatCost: Number,
+    totalSeats: Number,
+    availableSeats:{
+      type: Number,
+      default: function(){
+        return this.totalSeats
+      }
+    },
     status:{
       type: String,
       enum: ['active', 'finished'],  
@@ -37,25 +43,18 @@ const trainSchema = new mongoose.Schema({
         }  
       },
     }, 
-    assignedStaff: [{  
-      staff: {  
+    assignedStaff:{
+      driver:{
         type: mongoose.Schema.Types.ObjectId,  
-        ref: 'User'  
-      },  
-      date: Date,
-    }] 
+        ref: 'User'
+      },
+      engineer:{
+        type: mongoose.Schema.Types.ObjectId,  
+        ref: 'User'
+      }
+    } 
 }) 
 
 const Train = mongoose.model("Train", trainSchema)
 
 module.exports = Train
-
-
-    //   intermediateStations: [{  
-    //     station: {  
-    //       type: mongoose.Schema.Types.ObjectId,  
-    //       ref: 'Station'  
-    //     },  
-    //     arrivalTime: Date,  
-    //     departureTime: Date,  
-    //   }]  

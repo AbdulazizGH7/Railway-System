@@ -3,6 +3,8 @@ const router = express.Router();
 const moment = require('moment');
 const mongoose = require('mongoose')
 const Reservation = require('../models/Reservation');
+const Train = require('../models/Train');
+const User = require('../models/User');
 
 // @desc returns all the reservations
 router.get('/', async (req, res) => {
@@ -108,7 +110,126 @@ router.get('/:passengerId', async (req, res) => {
     }
 });
 
+// @desc creates a new reservation
+router.post('/', async (req, res) => {
+    try {
+        const {
+            user, 
+            trainId, 
+            seatsNum, 
+            nationalId, // Required for admin making reservation
+            firstName, // Required for admin making new user
+            lastName,  // Required for admin making new user
+            dependents // Optional
+        } = req.body;
 
+        const authenticatedUser = user;
+        let passengerUser;
+
+        // Handle admin creating reservation for another user
+        if (authenticatedUser.role === 'admin') {
+            if (!nationalId) {
+                return res.status(400).json({ 
+                    error: 'National ID is required for admin reservations' 
+                });
+            }
+
+            // Check if user exists
+            passengerUser = await User.findOne({ nationalId });
+
+            // If user doesn't exist, create new user
+            if (!passengerUser && firstName && lastName) {
+                passengerUser = await User.create({
+                    nationalId,
+                    firstName,
+                    lastName,
+                    role: 'passenger'
+                });
+            } else if (!passengerUser) {
+                return res.status(400).json({
+                    error: 'User not found and insufficient information to create new user'
+                });
+            }
+        } else {
+            // For non-admin requests, passenger is the authenticated user
+            passengerUser = authenticatedUser;
+        }
+
+        // Find the train and check availability
+        const train = await Train.findById(trainId);
+        if (!train) {
+            return res.status(404).json({ error: 'Train not found' });
+        }
+
+        // Calculate reservation cost based on seat cost and number of seats
+        const getDiscount = () =>{
+            if(passengerUser.loyaltyTier === 'Gold')
+                return 0.75
+            else if(passengerUser.loyaltyTier === 'Silver')
+                return 0.9
+            else if(passengerUser.loyaltyTier === 'Green')
+                return 0.95
+            else
+                return 1
+        }
+        const discount = getDiscount()
+        const cost = train.seatCost * seatsNum * discount;
+
+        // Create reservation object
+        const reservationData = {
+            passenger: passengerUser._id,
+            train: trainId,
+            seatsNum,
+            cost,
+            dependents
+        };
+
+        // Check if there are enough available seats
+        if (train.availableSeats >= seatsNum) {
+
+            if(user.role === 'admin'){
+                reservationData.status = 'confirmed'
+                await passengerUser.addLoyaltyPoints(train.distance);
+            }
+            else{
+                reservationData.status = 'pending'
+            }
+            
+            // Create the reservation
+            const reservation = await Reservation.create(reservationData);
+
+            // Update available seats
+            train.availableSeats -= seatsNum;
+            await train.save();
+
+            return res.status(201).json({
+                message: 'Reservation created successfully',
+                reservation
+            });
+        } else if (train.availableSeats === 0) {
+            // No seats available - create waitlisted reservation
+            reservationData.status = 'waitlisted';
+            const reservation = await Reservation.create(reservationData);
+
+            return res.status(201).json({
+                message: 'Reservation waitlisted',
+                reservation
+            });
+        } else {
+            // Not enough seats available
+            return res.status(400).json({
+                error: `Only ${train.availableSeats} seats available`
+            });
+        }
+
+    } catch (error) {
+        console.error('Reservation error:', error);
+        return res.status(500).json({
+            error: 'Internal server error',
+            details: error.message
+        });
+    }
+});
 
 
 module.exports = router;

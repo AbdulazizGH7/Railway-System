@@ -289,6 +289,10 @@ router.put('/pay/:reservationId', async (req, res) => {
         reservation.seatNumbers = newSeatNumbers;
         await reservation.save();
 
+        // Add loyalty points for the user
+        const user = await User.findById(reservation.passenger)
+        await user.addLoyaltyPoints(reservation.train.distance*reservation.seatsNum)
+
         res.json({
             message: 'Reservation confirmed successfully',
             seatNumbers: newSeatNumbers

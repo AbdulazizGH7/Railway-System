@@ -7,7 +7,7 @@ import axios from 'axios';
       try {
         const response = await axios.get("http://localhost:8000/api/trains");
         // Ensure we return an array
-        return Array.isArray(response.data.response) ? response.data.response : [];
+        return Array.isArray(response.data) ? response.data : [];
       } catch (error) {
         console.error('Error fetching trains:', error);
         return [];
@@ -17,7 +17,7 @@ import axios from 'axios';
     async getTodayTrains() {
       try {
         const response = await axios.get("http://localhost:8000/api/trains/today");
-        return Array.isArray(response.data.response) ? response.data.response : [];
+        return Array.isArray(response.data) ? response.data : [];
       } catch (error) {
         console.error('Error fetching today\'s trains:', error);
         return [];
@@ -26,7 +26,7 @@ import axios from 'axios';
   
     async reserveTrip(tripData) {
       const response = await axios.post("http://localhost:8000/api/reservations", tripData);
-      return response.data.response;
+      return response.data;
     }
   };
   export default trainService;

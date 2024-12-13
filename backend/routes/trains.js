@@ -80,6 +80,14 @@ router.get('/', async (req, res) => {
                 select: 'city'
             });
 
+        // Get waitlisted reservations for all trains
+        const waitlistedReservations = await Reservation.find({
+            train: { $in: trains.map(train => train._id) },
+            status: 'waitlisted'
+        }).distinct('train');
+
+        const waitlistedTrainIds = new Set(waitlistedReservations.map(id => id.toString()));
+
         // Format the response
         const formattedTrains = trains.map(train => ({
             from: train.route.source.station.city,
@@ -89,7 +97,8 @@ router.get('/', async (req, res) => {
             date: moment(train.route.source.departureTime).format('YYYY-MM-DD'),
             departureTime: moment(train.route.source.departureTime).format('HH:mm'),
             arrivalTime: moment(train.route.destination.arrivalTime).format('HH:mm'),
-            availableSeats: train.availableSeats
+            // Show 0 seats if train has waitlisted reservations
+            availableSeats: waitlistedTrainIds.has(train._id.toString()) ? 0 : train.availableSeats
         }));
 
         res.json(formattedTrains);

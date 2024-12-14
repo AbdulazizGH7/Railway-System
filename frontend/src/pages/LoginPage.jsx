@@ -1,13 +1,50 @@
 import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom'
+import { useUser } from '../contexts/UserContext'
+import Spinner from '../components/Spinner'
+import axios from 'axios'
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
-  const handleSubmit = (e) => {
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { login } = useUser(); 
+  const navigate = useNavigate();
+  
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Logging in with:", email, password);
+    setError('');
+    setLoading(true);
+  
+    try {
+      const response = await axios.post('http://localhost:8000/api/auth/login', {
+        email,
+        password
+      });
+  
+      // Login successful
+      login(response.data.user)
+      setLoading(false)
+      navigate('/home')
+
+    } catch (error) {
+      if (error.response) {
+        // Server responded with an error
+        setError(error.response.data.error || 'Login failed');
+      } else if (error.request) {
+        // Request was made but no response received
+        setError('No response from server. Please try again.');
+      } else {
+        // Error in request setup
+        setError('An error occurred. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
+  
+  
 
   return (
     <div
@@ -30,6 +67,11 @@ const LoginPage = () => {
         {/* Right Section: Login Form */}
         <div className="w-full md:w-1/3 bg-white p-8 rounded-lg shadow-lg">
           <h2 className="text-3xl font-extrabold text-center text-blue-500 mb-6">Login</h2>
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">
+              {error}
+            </div>
+          )}
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
               <label htmlFor="email" className="block text-gray-700 font-medium">Email</label>
@@ -67,7 +109,7 @@ const LoginPage = () => {
           <div className="mt-4 text-center">
             <p className="text-sm text-gray-600">
               Don't have an account? 
-              <a href="/signup" className="text-blue-500 hover:underline">Sign up</a>
+              <Link to={"/signup"} className="text-blue-500 hover:underline">Sign up</Link>
             </p>
           </div>
         </div>

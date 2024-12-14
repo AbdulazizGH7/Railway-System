@@ -440,4 +440,59 @@ router.get('/waitlist/:trainId', async (req, res) => {
     }
 });
 
+// @desc promote waitlisted reservation
+router.put('/promote/:reservationId', async (req, res) => {
+    try {
+        // Find the reservation and populate train details
+        const reservation = await Reservation.findById(req.params.reservationId)
+            .populate('train');
+
+        if (!reservation) {
+            return res.status(404).json({ error: 'Reservation not found' });
+        }
+
+        // Verify the reservation is currently waitlisted
+        if (reservation.status !== 'waitlisted') {
+            return res.status(400).json({ 
+                error: 'Invalid operation', 
+                message: 'Only waitlisted reservations can be promoted' 
+            });
+        }
+
+        const train = reservation.train;
+
+        // Check if there are enough available seats
+        if (train.availableSeats < reservation.seatsNum) {
+            return res.status(400).json({ 
+                error: 'Not enough seats', 
+                message: `Only ${train.availableSeats} seats available` 
+            });
+        }
+
+        // Update reservation status to pending
+        reservation.status = 'pending';
+
+        // Save the reservation (this will trigger the middleware to recalculate the payment deadline)
+        const updatedReservation = await reservation.save();
+
+        // Update train's available seats
+        await Train.findByIdAndUpdate(
+            train._id,
+            { $inc: { availableSeats: -reservation.seatsNum } }
+        );
+
+        return res.status(200).json({
+            message: 'Reservation promoted successfully',
+            reservation: updatedReservation
+        });
+
+    } catch (error) {
+        console.error('Error promoting waitlisted reservation:', error);
+        return res.status(500).json({ 
+            error: 'Internal server error', 
+            message: error.message 
+        });
+    }
+});
+
 module.exports = router;

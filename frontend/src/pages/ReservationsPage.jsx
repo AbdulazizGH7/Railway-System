@@ -8,7 +8,7 @@ import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 import EditReservationModal from '../components/EditReservationModal';
 
 function ReservationsPage({ userType }) {
-  const isAdmin = userType === 'Admin';
+  const isAdmin = userType === 'admin';
   const navigate = useNavigate();
 
   const [reservations, setReservations] = useState([]);
@@ -74,13 +74,6 @@ function ReservationsPage({ userType }) {
       }
     });
   };
-  
-
-  const calculatePaymentDeadline = (reservationDate) => {
-    const date = new Date(reservationDate);
-    date.setDate(date.getDate() - 1); // Subtract 1 day
-    return date.toISOString().split('T')[0];
-  };
 
   return (
     <div className="flex flex-col items-center justify-start space-y-6 my-5">
@@ -105,10 +98,9 @@ function ReservationsPage({ userType }) {
               <h3 className="text-xl font-semibold text-gray-800 mb-2">{reservation.from} to {reservation.to}</h3>
               <p className="text-sm text-gray-600">Passenger ID: {reservation.passengerId}</p>
               <p className="text-sm text-gray-600">Date: {reservation.date}</p>
-              <p className="text-sm text-gray-600">Payment Deadline: {calculatePaymentDeadline(reservation.date)}</p>
+              <p className="text-sm text-gray-600">Payment Deadline: {reservation.paymentDeadline}</p>
               <p className="text-sm text-gray-600">Departure: {reservation.departureTime}</p>
               <p className="text-sm text-gray-600">Arrival: {reservation.arrivalTime}</p>
-              <p className="text-sm text-gray-600">Duration: {reservation.duration}</p>
 
               <div className="mt-4">
                 {isAdmin ? (

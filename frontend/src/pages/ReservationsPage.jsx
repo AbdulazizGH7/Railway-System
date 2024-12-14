@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaTrash, FaPen } from 'react-icons/fa';
 import { AiOutlineCheckCircle } from 'react-icons/ai';
+import trainService from '../components/trainService';
 import ReservationModal from '../components/ReservationModal';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 import EditReservationModal from '../components/EditReservationModal';
@@ -10,73 +11,76 @@ function ReservationsPage({ userType }) {
   const isAdmin = userType === 'Admin';
   const navigate = useNavigate();
 
-  const [reservations, setReservations] = useState([
-    { 
-      id: '23789273', 
-      passengerId: '202162490', 
-      from: 'Hufof', 
-      to: 'Riyadh', 
-      date: '2024-1-1',
-      departureTime: '08:00 AM',
-      arrivalTime: '09:30 AM',
-      duration: '1h 30m',
-      isPaid: false, 
-      waitlist: false, 
-    },
-    { 
-      id: '23789274', 
-      passengerId: '202162491', 
-      from: 'Dammam', 
-      to: 'Jeddah', 
-      date: '2024-1-2',
-      departureTime: '10:00 AM',
-      arrivalTime: '12:00 PM',
-      duration: '2h 00m',
-      isPaid: true, 
-      waitlist: false, 
-    },
-  ]);
-
+  const [reservations, setReservations] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedReservation, setSelectedReservation] = useState(null);
   const [deleteReservation, setDeleteReservation] = useState(null);
   const [editReservation, setEditReservation] = useState(null);
 
+  // Fetch reservations on mount
+  useEffect(() => {
+    async function fetchReservations() {
+      try {
+        const data = await trainService.getAllReservations();
+        setReservations(data);
+      } catch (error) {
+        console.error("Error fetching reservations:", error);
+      }
+    }
+
+    fetchReservations();
+  }, []);
+
   const filteredReservations = reservations.filter(
     (reservation) =>
-      reservation.id.includes(searchQuery) || reservation.passengerId.includes(searchQuery)
+      reservation.reservationId.includes(searchQuery) ||
+      reservation.passengerId.includes(searchQuery)
   );
 
   const handleRowClick = (reservation) => {
     setSelectedReservation(reservation);
   };
 
-  const handleDelete = (id) => {
-    setReservations(reservations.filter(reservation => reservation.id !== id));
+  const handleDelete = async (id) => {
+    try {
+      await trainService.deleteReservation(id);
+      setReservations((prev) => prev.filter((res) => res.reservationId !== id));
+    } catch (error) {
+      console.error("Error deleting reservation:", error);
+    }
   };
 
-  const handleEdit = (updatedReservation) => {
-    setReservations(reservations.map(reservation => 
-      reservation.id === updatedReservation.id ? updatedReservation : reservation
-    ));
+  const handleEdit = async (updatedReservation) => {
+    try {
+      const updatedData = await trainService.updateReservation(
+        updatedReservation.reservationId,
+        updatedReservation
+      );
+      setReservations((prev) =>
+        prev.map((res) =>
+          res.reservationId === updatedReservation.reservationId ? updatedData : res
+        )
+      );
+    } catch (error) {
+      console.error("Error updating reservation:", error);
+    }
   };
 
   const handlePaymentRedirect = (reservation) => {
     navigate('/payment', {
       state: { 
         trip: reservation,
-        numSeats: 1,
+        numSeats: reservation.seatsNum,
       }
     });
   };
+  
 
   const calculatePaymentDeadline = (reservationDate) => {
     const date = new Date(reservationDate);
-    date.setDate(date.getDate()); 
+    date.setDate(date.getDate() - 1); // Subtract 1 day
     return date.toISOString().split('T')[0];
   };
-
-  
 
   return (
     <div className="flex flex-col items-center justify-start space-y-6 my-5">
@@ -94,7 +98,7 @@ function ReservationsPage({ userType }) {
         {filteredReservations.length > 0 ? (
           filteredReservations.map((reservation) => (
             <div
-              key={reservation.id}
+              key={reservation.reservationId}
               className="bg-white rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105 duration-200 p-6 cursor-pointer border border-gray-200"
               onClick={() => handleRowClick(reservation)}
             >
@@ -107,17 +111,16 @@ function ReservationsPage({ userType }) {
               <p className="text-sm text-gray-600">Duration: {reservation.duration}</p>
 
               <div className="mt-4">
-                {/* Payment Status based on User Type */}
                 {isAdmin ? (
-                  reservation.isPaid ? (
+                  reservation.status === 'confirmed' ? (
                     <span className="text-green-600 font-semibold">Paid</span>
                   ) : (
                     <span className="text-yellow-600 font-semibold">Pending</span>
                   )
                 ) : (
-                  reservation.isPaid ? (
+                  reservation.status === 'confirmed' ? (
                     <span className="text-green-600 font-semibold">Confirmed</span>
-                  ) : reservation.waitlist ? (
+                  ) : reservation.status === 'waitlisted' ? (
                     <span className="text-gray-600 font-semibold">Waitlist</span>
                   ) : (
                     <button
@@ -171,7 +174,7 @@ function ReservationsPage({ userType }) {
         <DeleteConfirmationModal 
           reservation={deleteReservation}
           onClose={() => setDeleteReservation(null)}
-          onConfirm={handleDelete}
+          onConfirm={() => handleDelete(deleteReservation.reservationId)}
         />
       )}
 

@@ -27,6 +27,56 @@ import axios from 'axios';
     async reserveTrip(tripData) {
       const response = await axios.post("http://localhost:8000/api/reservations", tripData);
       return response.data;
-    }
+    },
+
+    async getAllReservations() {
+      try {
+        const response = await axios.get("http://localhost:8000/api/reservations");
+        return response.data;
+      } catch (error) {
+        console.error("Error fetching reservations:", error);
+        throw error;
+      }
+    },
+  
+    async getReservationByPassenger(passengerId) {
+      try {
+        const response = await axios.get(`http://localhost:8000/api/reservations/${passengerId}`);
+        return response.data;
+      } catch (error) {
+        console.error(`Error fetching reservations for passenger ${passengerId}:`, error);
+        throw error;
+      }
+    },
+  
+    async deleteReservation(reservationId) {
+      try {
+        const response = await axios.delete(`http://localhost:8000/api/reservations/${reservationId}`);
+        return response.data;
+      } catch (error) {
+        console.error(`Error deleting reservation ${reservationId}:`, error);
+        throw error;
+      }
+    },
+  
+    async updateReservation(reservationId, updatedData) {
+      try {
+        const response = await axios.put(`http://localhost:8000/api/reservations/${reservationId}`, updatedData);
+        return response.data;
+      } catch (error) {
+        console.error(`Error updating reservation ${reservationId}:`, error);
+        throw error;
+      }
+    },
+  
+    async confirmPayment(reservationId) {
+      try {
+        const response = await axios.put(`http://localhost:8000/api/reservations/pay/${reservationId}`);
+        return response.data;
+      } catch (error) {
+        console.error(`Error confirming payment for reservation ${reservationId}:`, error);
+        throw error;
+      }
+    },
   };
   export default trainService;

@@ -375,4 +375,69 @@ router.delete('/:reservationId', async (req, res) => {
     }
 });
 
+// @desc returns all waitlisted reservations given a trainId
+router.get('/waitlist/:trainId', async (req, res) => {
+    try {
+        const { trainId } = req.params;
+
+        // Validate trainId
+        if (!mongoose.Types.ObjectId.isValid(trainId)) {
+            return res.status(400).json({ error: 'Invalid train ID format' });
+        }
+
+        // Check if train exists
+        const train = await Train.findById(trainId);
+        if (!train) {
+            return res.status(404).json({ error: 'Train not found' });
+        }
+
+        // Get all waitlisted reservations for this train
+        const waitlistedReservations = await Reservation.find({
+            train: trainId,
+            status: 'waitlisted'
+        }).populate('passenger');
+
+        const waitlistedCount = waitlistedReservations.length;
+
+        // Organize reservations by loyalty tier
+        const reservationsByTier = {
+            Gold: [],
+            Silver: [],
+            Green: [],
+            Regular: []
+        };
+
+        // Sort reservations into their respective tiers
+        waitlistedReservations.forEach(reservation => {
+            const tier = reservation.passenger.loyaltyTier;
+            reservationsByTier[tier].push({
+                reservationId: reservation._id,
+                passengerId: reservation.passenger._id,
+                passengerName: `${reservation.passenger.firstName} ${reservation.passenger.lastName}`,
+                loyaltyPoints: reservation.passenger.loyaltyPoints,
+                seatsNum: reservation.seatsNum,
+                createdAt: moment(reservation.createdAt).format('YYYY-MM-DD HH:mm'),
+            });
+        });
+
+        // Sort each tier's reservations by creation date
+        Object.keys(reservationsByTier).forEach(tier => {
+            reservationsByTier[tier].sort((a, b) => a.createdAt - b.createdAt);
+        });
+
+        return res.status(200).json({
+            trainId,
+            waitlistedCount,
+            waitlist: reservationsByTier
+        });
+
+    } catch (error) {
+        console.error('Error fetching waitlist:', error);
+        return res.status(500).json({ 
+            error: 'Internal server error', 
+            message: error.message 
+        });
+    }
+});
+
 module.exports = router;

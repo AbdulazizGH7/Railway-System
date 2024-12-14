@@ -81,6 +81,16 @@ router.get('/', async (req, res) => {
                 path: 'route.destination.station',
                 model: 'Station',
                 select: 'city'
+            })
+            .populate({
+                path: 'assignedStaff.driver',
+                model: 'User',
+                select: 'firstName lastName'
+            })
+            .populate({
+                path: 'assignedStaff.engineer',
+                model: 'User',
+                select: 'firstName lastName'
             });
 
         // Get waitlisted reservations for all trains
@@ -112,9 +122,22 @@ router.get('/', async (req, res) => {
                 date: moment(train.route.source.departureTime).format('YYYY-MM-DD'),
                 departureTime: moment(train.route.source.departureTime).format('HH:mm'),
                 arrivalTime: moment(train.route.destination.arrivalTime).format('HH:mm'),
-                duration: formattedDuration, // Added duration field
-                // Show 0 seats if train has waitlisted reservations
-                availableSeats: isAdmin ? train.availableSeats : (waitlistedTrainIds.has(train._id.toString()) ? 0 : train.availableSeats)
+                duration: formattedDuration,
+                // Include both totalSeats and availableSeats
+                totalSeats: train.totalSeats,
+                availableSeats: isAdmin ? train.availableSeats : (waitlistedTrainIds.has(train._id.toString()) ? 0 : train.availableSeats),
+                assignedStaff: {
+                    driver: train.assignedStaff?.driver ? {
+                        _id: train.assignedStaff.driver._id,
+                        firstName: train.assignedStaff.driver.firstName,
+                        lastName: train.assignedStaff.driver.lastName
+                    } : null,
+                    engineer: train.assignedStaff?.engineer ? {
+                        _id: train.assignedStaff.engineer._id,
+                        firstName: train.assignedStaff.engineer.firstName,
+                        lastName: train.assignedStaff.engineer.lastName
+                    } : null
+                }
             };
         });
 

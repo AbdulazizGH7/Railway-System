@@ -411,7 +411,7 @@ router.get('/waitlist/:trainId', async (req, res) => {
         waitlistedReservations.forEach(reservation => {
             const tier = reservation.passenger.loyaltyTier;
             reservationsByTier[tier].push({
-                reservationId: reservation._id,
+                _id: reservation._id,
                 passengerId: reservation.passenger._id,
                 passengerName: `${reservation.passenger.firstName} ${reservation.passenger.lastName}`,
                 loyaltyPoints: reservation.passenger.loyaltyPoints,

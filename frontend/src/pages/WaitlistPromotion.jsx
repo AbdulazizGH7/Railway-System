@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect } from 'react';
 import Select from 'react-select';
 import { AlertCircle, CheckCircle, ArrowRight } from 'lucide-react';
 
@@ -6,10 +6,18 @@ const WaitlistPromotion = () => {
   const [trainOptions, setTrainOptions] = useState([]);
   const [selectedTrains, setSelectedTrains] = useState([]);
   const [waitlistedPassengers, setWaitlistedPassengers] = useState([]);
-  const [selectedPassengers, setSelectedPassengers] = useState([]); // changed to array
+  const [selectedPassengers, setSelectedPassengers] = useState([]);
   const [promotionResult, setPromotionResult] = useState(null);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Loyalty tier classification
+  const getLoyaltyTier = (points) => {
+    if (points >= 600) return 'Gold';
+    if (points >= 400) return 'Silver';
+    if (points >= 200) return 'Green';
+    return 'Regular';
+  };
 
   // Simulated train API
   const fetchTrainOptions = async () => {
@@ -31,9 +39,13 @@ const WaitlistPromotion = () => {
           'TR101': [
             { passengerId: 'P001', name: 'Ali', loyaltyPoints: 450, class: 'Second AC', waitlistPosition: 1 },
             { passengerId: 'P002', name: 'Khalid', loyaltyPoints: 650, class: 'First AC', waitlistPosition: 2 },
+            { passengerId: 'P004', name: 'Mohammed', loyaltyPoints: 250, class: 'Second AC', waitlistPosition: 3 },
+            { passengerId: 'P005', name: 'Sara', loyaltyPoints: 150, class: 'Sleeper', waitlistPosition: 4 },
           ],
           'TR202': [
-            { passengerId: 'P003', name: 'Mike Johnson', loyaltyPoints: 250, class: 'Sleeper', waitlistPosition: 1 },
+            { passengerId: 'P003', name: 'Ahmad', loyaltyPoints: 750, class: 'First AC', waitlistPosition: 1 },
+            { passengerId: 'P006', name: 'Fatima', loyaltyPoints: 550, class: 'Second AC', waitlistPosition: 2 },
+            { passengerId: 'P007', name: 'Hassan', loyaltyPoints: 350, class: 'Sleeper', waitlistPosition: 3 },
           ],
         };
 
@@ -75,7 +87,7 @@ const WaitlistPromotion = () => {
     setIsLoading(true);
     setError(null);
     setWaitlistedPassengers([]);
-    setSelectedPassengers([]); // Clear selected passengers
+    setSelectedPassengers([]);
 
     try {
       const trainNos = selectedTrains.map((train) => train.value);
@@ -109,7 +121,7 @@ const WaitlistPromotion = () => {
     }
 
     try {
-      const trainNo = selectedTrains[0]?.value || 'Unknown Train'; // Assuming all selected passengers belong to the same train
+      const trainNo = selectedTrains[0]?.value || 'Unknown Train';
       for (const passenger of selectedPassengers) {
         const result = await promoteWaitlistedPassenger(trainNo, passenger.passengerId);
 
@@ -122,7 +134,6 @@ const WaitlistPromotion = () => {
             ],
           }));
 
-          // Remove promoted passenger from the list
           setWaitlistedPassengers((prev) =>
             prev.filter((p) => p.passengerId !== passenger.passengerId)
           );
@@ -131,10 +142,70 @@ const WaitlistPromotion = () => {
         }
       }
 
-      setSelectedPassengers([]); // Clear the selected passengers after promotion
+      setSelectedPassengers([]);
     } catch (err) {
       setError('An error occurred during promotion');
     }
+  };
+
+  // Group passengers by loyalty tier
+  const groupedPassengers = waitlistedPassengers.reduce((acc, passenger) => {
+    const tier = getLoyaltyTier(passenger.loyaltyPoints);
+    if (!acc[tier]) acc[tier] = [];
+    acc[tier].push(passenger);
+    return acc;
+  }, {});
+
+  const renderPassengersByTier = () => {
+    const tiers = ['Gold', 'Silver', 'Green', 'Regular'];
+    
+    return (
+      <div className="mt-4">
+        <h3 className="text-lg font-semibold mb-2 text-gray-700">Waitlisted Passengers by Tier</h3>
+        {tiers.map(tier => (
+          groupedPassengers[tier]?.length > 0 && (
+            <div key={tier} className="mb-4">
+              <h4 className={`text-md font-medium mb-2 ${
+                tier === 'Gold' ? 'text-yellow-600' :
+                tier === 'Silver' ? 'text-gray-500' :
+                tier === 'Green' ? 'text-green-600' :
+                'text-blue-600'
+              }`}>
+                {tier} Tier
+              </h4>
+              <div className="space-y-2">
+                {groupedPassengers[tier].map((passenger) => (
+                  <div
+                    key={passenger.passengerId}
+                    onClick={() => handleSelectPassenger(passenger)}
+                    className={`p-3 border rounded-md cursor-pointer transition-all ${
+                      selectedPassengers.some((p) => p.passengerId === passenger.passengerId)
+                        ? 'bg-blue-100 border-blue-500'
+                        : 'hover:bg-gray-50 border-gray-200'
+                    }`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="font-medium">{passenger.name}</p>
+                        <p className="text-sm text-gray-600">
+                          ID: {passenger.passengerId} | 
+                          Waitlist Position: {passenger.waitlistPosition} | 
+                          Class: {passenger.class} | 
+                          Loyalty Points: {passenger.loyaltyPoints}
+                        </p>
+                      </div>
+                      {selectedPassengers.some((p) => p.passengerId === passenger.passengerId) && 
+                        <ArrowRight className="text-blue-600" />
+                      }
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -169,34 +240,7 @@ const WaitlistPromotion = () => {
         </div>
       )}
 
-      {waitlistedPassengers.length > 0 && (
-        <div className="mt-4">
-          <h3 className="text-lg font-semibold mb-2 text-gray-700">Waitlisted Passengers</h3>
-          <div className="space-y-2">
-            {waitlistedPassengers.map((passenger) => (
-              <div
-                key={passenger.passengerId}
-                onClick={() => handleSelectPassenger(passenger)}
-                className={`p-3 border rounded-md cursor-pointer transition-all ${
-                  selectedPassengers.some((p) => p.passengerId === passenger.passengerId)
-                    ? 'bg-blue-100 border-blue-500'
-                    : 'hover:bg-gray-50 border-gray-200'
-                }`}
-              >
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="font-medium">{passenger.name}</p>
-                    <p className="text-sm text-gray-600">
-                      ID: {passenger.passengerId} | Waitlist Position: {passenger.waitlistPosition} | Class: {passenger.class} | Loyalty Points: {passenger.loyaltyPoints}
-                    </p>
-                  </div>
-                  {selectedPassengers.some((p) => p.passengerId === passenger.passengerId) && <ArrowRight className="text-blue-600" />}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {waitlistedPassengers.length > 0 && renderPassengersByTier()}
 
       <button
         onClick={handlePromotePassengers}

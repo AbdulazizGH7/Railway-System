@@ -44,7 +44,7 @@ cron.schedule('0 * * * *', async () => {
 });
 
 // Departure reminder - runs every 30 minutes
-cron.schedule('* * * * *', async () => {
+cron.schedule('*/30 * * * *', async () => {
     try {
         console.log('Running 3-hour departure reminder job...');
 

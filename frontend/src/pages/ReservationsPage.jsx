@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaTrash, FaPen } from 'react-icons/fa';
 import { AiOutlineCheckCircle } from 'react-icons/ai';
+import ReservationModal from '../components/ReservationModal';
+import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
+import EditReservationModal from '../components/EditReservationModal';
 
 function ReservationsPage({ userType }) {
   const isAdmin = userType === 'Admin';
@@ -18,6 +21,7 @@ function ReservationsPage({ userType }) {
       arrivalTime: '09:30 AM',
       duration: '1h 30m',
       isPaid: false, 
+      waitlist: false, 
     },
     { 
       id: '23789274', 
@@ -28,7 +32,8 @@ function ReservationsPage({ userType }) {
       departureTime: '10:00 AM',
       arrivalTime: '12:00 PM',
       duration: '2h 00m',
-      isPaid: false, 
+      isPaid: true, 
+      waitlist: false, 
     },
   ]);
 
@@ -65,6 +70,14 @@ function ReservationsPage({ userType }) {
     });
   };
 
+  const calculatePaymentDeadline = (reservationDate) => {
+    const date = new Date(reservationDate);
+    date.setDate(date.getDate()); 
+    return date.toISOString().split('T')[0];
+  };
+
+  
+
   return (
     <div className="flex flex-col items-center justify-start space-y-6 my-5">
       {/* Search Bar */}
@@ -88,23 +101,35 @@ function ReservationsPage({ userType }) {
               <h3 className="text-xl font-semibold text-gray-800 mb-2">{reservation.from} to {reservation.to}</h3>
               <p className="text-sm text-gray-600">Passenger ID: {reservation.passengerId}</p>
               <p className="text-sm text-gray-600">Date: {reservation.date}</p>
+              <p className="text-sm text-gray-600">Payment Deadline: {calculatePaymentDeadline(reservation.date)}</p>
               <p className="text-sm text-gray-600">Departure: {reservation.departureTime}</p>
               <p className="text-sm text-gray-600">Arrival: {reservation.arrivalTime}</p>
               <p className="text-sm text-gray-600">Duration: {reservation.duration}</p>
 
               <div className="mt-4">
-                {reservation.isPaid ? (
-                  <span className="text-green-600 font-semibold">Paid</span>
+                {/* Payment Status based on User Type */}
+                {isAdmin ? (
+                  reservation.isPaid ? (
+                    <span className="text-green-600 font-semibold">Paid</span>
+                  ) : (
+                    <span className="text-yellow-600 font-semibold">Pending</span>
+                  )
                 ) : (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handlePaymentRedirect(reservation);
-                    }}
-                    className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center gap-2"
-                  >
-                    Paying <AiOutlineCheckCircle className="inline-block ml-2 text-xl" />
-                  </button>
+                  reservation.isPaid ? (
+                    <span className="text-green-600 font-semibold">Confirmed</span>
+                  ) : reservation.waitlist ? (
+                    <span className="text-gray-600 font-semibold">Waitlist</span>
+                  ) : (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePaymentRedirect(reservation);
+                      }}
+                      className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center gap-2"
+                    >
+                      Paying <AiOutlineCheckCircle className="inline-block ml-2 text-xl" />
+                    </button>
+                  )
                 )}
               </div>
 

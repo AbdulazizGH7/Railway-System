@@ -17,12 +17,19 @@ const AssignDriverPage = () => {
     { id: "D3", name: "Robert Johnson" },
   ];
 
+  const engineers = [
+    { id: "E1", name: "Alice Cooper" },
+    { id: "E2", name: "Bob Martin" },
+    { id: "E3", name: "Charlie Clark" },
+  ];
+
   const [searchId, setSearchId] = useState("");
   const [filterFrom, setFilterFrom] = useState("");
   const [filterTo, setFilterTo] = useState("");
   const [selectedTrain, setSelectedTrain] = useState(null); // Train for which driver/engineer is being assigned
   const [isModalOpen, setIsModalOpen] = useState(false); // To control modal visibility
-  const [selectedDriver, setSelectedDriver] = useState(null); // Selected driver/engineer
+  const [selectedDriver, setSelectedDriver] = useState(null); // Selected driver
+  const [selectedEngineer, setSelectedEngineer] = useState(null); // Selected engineer
   const [trains, setTrains] = useState(initialTrains); // Stores train data and manages assignments
 
   // Filtered trains based on search and filters
@@ -39,23 +46,24 @@ const AssignDriverPage = () => {
     setIsModalOpen(true);
   };
 
-  // Handle assigning driver
-  const handleAssignDriver = () => {
-    if (selectedDriver) {
-      alert(`Driver/Engineer ${selectedDriver.name} assigned to Train ${selectedTrain.id}`);
+  // Handle assigning driver/engineer
+  const handleAssignDriverEngineer = () => {
+    if (selectedDriver || selectedEngineer) {
+      alert(`Assigned ${selectedDriver ? selectedDriver.name : selectedEngineer.name} to Train ${selectedTrain.id}`);
       
-      // Mark the train as having a driver assigned
+      // Mark the train as having a driver or engineer assigned
       setTrains(prevTrains =>
         prevTrains.map(train =>
           train.id === selectedTrain.id ? { ...train, driverAssigned: true } : train
         )
       );
 
-      // Close modal and reset selected driver
+      // Close modal and reset selected driver/engineer
       setIsModalOpen(false);
       setSelectedDriver(null);
+      setSelectedEngineer(null);
     } else {
-      alert("Please select a driver/engineer");
+      alert("Please select a driver or engineer");
     }
   };
 
@@ -102,29 +110,27 @@ const AssignDriverPage = () => {
 
       {/* Train Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-        {filteredTrains
-          .filter((train) => !train.driverAssigned) // Only show trains that have no driver assigned
-          .map((train) => (
-            <div
-              key={train.id}
-              className="bg-white shadow rounded-lg p-4 flex flex-col justify-between"
-            >
-              <div>
-                <h2 className="text-xl font-semibold">Train ID: {train.id}</h2>
-                <p className="text-gray-700"><strong>From:</strong> {train.from}</p>
-                <p className="text-gray-700"><strong>To:</strong> {train.to}</p>
-                <p className="text-gray-700"><strong>Date:</strong> {train.date}</p>
-                <p className="text-gray-700"><strong>Departure:</strong> {train.departureTime}</p>
-                <p className="text-gray-700"><strong>Arrival:</strong> {train.arrivalTime}</p>
-              </div>
-              <button
-                onClick={() => handleAssignClick(train)}
-                className="mt-4 py-2 px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
-              >
-                Assign Driver/Engineer
-              </button>
+        {filteredTrains.map((train) => (
+          <div
+            key={train.id}
+            className="bg-white shadow rounded-lg p-4 flex flex-col justify-between"
+          >
+            <div>
+              <h2 className="text-xl font-semibold">Train ID: {train.id}</h2>
+              <p className="text-gray-700"><strong>From:</strong> {train.from}</p>
+              <p className="text-gray-700"><strong>To:</strong> {train.to}</p>
+              <p className="text-gray-700"><strong>Date:</strong> {train.date}</p>
+              <p className="text-gray-700"><strong>Departure:</strong> {train.departureTime}</p>
+              <p className="text-gray-700"><strong>Arrival:</strong> {train.arrivalTime}</p>
             </div>
-          ))}
+            <button
+              onClick={() => handleAssignClick(train)}
+              className="mt-4 py-2 px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+            >
+              Assign Driver/Engineer
+            </button>
+          </div>
+        ))}
         {filteredTrains.length === 0 && (
           <p className="col-span-full text-center text-gray-500">No trains match the criteria.</p>
         )}
@@ -136,13 +142,13 @@ const AssignDriverPage = () => {
           <div className="bg-white p-6 rounded-lg shadow-lg w-96">
             <h2 className="text-2xl font-semibold mb-4">Assign Driver/Engineer to Train {selectedTrain.id}</h2>
             <div className="mb-4">
-              <label className="block text-sm font-semibold mb-2">Select Driver/Engineer:</label>
+              <label className="block text-sm font-semibold mb-2">Select Driver:</label>
               <select
                 value={selectedDriver ? selectedDriver.id : ""}
                 onChange={(e) => setSelectedDriver(drivers.find((driver) => driver.id === e.target.value))}
                 className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring focus:ring-blue-300"
               >
-                <option value="">Select a driver/engineer</option>
+                <option value="">Select a driver</option>
                 {drivers.map((driver) => (
                   <option key={driver.id} value={driver.id}>
                     {driver.name}
@@ -150,16 +156,31 @@ const AssignDriverPage = () => {
                 ))}
               </select>
             </div>
-            <div className="flex justify-between">
+            <div className="mb-4">
+              <label className="block text-sm font-semibold mb-2">Select Engineer:</label>
+              <select
+                value={selectedEngineer ? selectedEngineer.id : ""}
+                onChange={(e) => setSelectedEngineer(engineers.find((engineer) => engineer.id === e.target.value))}
+                className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring focus:ring-blue-300"
+              >
+                <option value="">Select an engineer</option>
+                {engineers.map((engineer) => (
+                  <option key={engineer.id} value={engineer.id}>
+                    {engineer.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex justify-end space-x-4">
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"
+                className="py-2 px-4 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
               >
                 Cancel
               </button>
               <button
-                onClick={handleAssignDriver}
-                className="py-2 px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+                onClick={handleAssignDriverEngineer}
+                className="py-2 px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
               >
                 Assign
               </button>

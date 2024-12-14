@@ -27,7 +27,15 @@ const reservationSchema = new mongoose.Schema({
     }],
     seatNumbers: [{
       type: Number
-    }],   
+    }],
+    paymentReminder:{
+      type:Boolean,
+      default: false
+    },
+    departureReminder:{
+      type:Boolean,
+      default: false
+    },  
     createdAt: {    
       type: Date,    
       default: Date.now    

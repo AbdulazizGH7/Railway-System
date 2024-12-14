@@ -22,6 +22,7 @@ cron.schedule('0 * * * *', async () => {
 
         const unpaidReservations = await Reservation.find({
             status: 'pending',
+            paymentReminder: false,
             paymentDeadline: { $lt: new Date() }
         }).populate('passenger');
 
@@ -36,6 +37,12 @@ cron.schedule('0 * * * *', async () => {
             };
 
             await transporter.sendMail(mailOptions);
+
+            // Update the paymentReminder flag to true
+            await Reservation.findByIdAndUpdate(reservation._id, {
+                paymentReminder: true
+            });
+
             console.log(`Payment reminder email sent to ${passenger.email}`);
         }
     } catch (error) {
@@ -61,6 +68,7 @@ cron.schedule('*/30 * * * *', async () => {
         for (const train of trainsDepartingSoon) {
             const reservations = await Reservation.find({
                 train: train._id,
+                departureReminder: false,
                 status: { $in: ['confirmed', 'pending'] }
             }).populate('passenger');
 
@@ -75,6 +83,12 @@ cron.schedule('*/30 * * * *', async () => {
                 };
 
                 await transporter.sendMail(mailOptions);
+
+                // Update the departureReminder flag to true
+                await Reservation.findByIdAndUpdate(reservation._id, {
+                    departureReminder: true
+                });
+                
                 console.log(`Departure reminder email sent to ${passenger.email}`);
             }
         }

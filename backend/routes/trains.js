@@ -123,8 +123,9 @@ router.get('/', async (req, res) => {
                 departureTime: moment(train.route.source.departureTime).format('HH:mm'),
                 arrivalTime: moment(train.route.destination.arrivalTime).format('HH:mm'),
                 duration: formattedDuration,
+                // Include both totalSeats and availableSeats
+                totalSeats: train.totalSeats,
                 availableSeats: isAdmin ? train.availableSeats : (waitlistedTrainIds.has(train._id.toString()) ? 0 : train.availableSeats),
-                // Add the assignedStaff information
                 assignedStaff: {
                     driver: train.assignedStaff?.driver ? {
                         _id: train.assignedStaff.driver._id,

@@ -251,6 +251,32 @@ router.post('/', async (req, res) => {
     }
 });
 
+// @desc get payment details
+router.get('/pay/:reservationId', async (req, res) => {
+    try {
+
+        const { reservationId } = req.params;
+
+        const reservation = await Reservation.findById(reservationId)
+            .populate('train', 'nameEng nameAr')
+
+            reservationDetails = {
+                trainEng: reservation.train.nameEng,
+                trainAr: reservation.train.nameAr,
+                seatsNum: reservation.seatsNum,
+                cost: reservation.cost
+            };
+
+        res.json(reservationDetails);
+    } catch (error) {
+        console.error('Detailed error:', error);
+        res.status(500).json({ 
+            message: 'Error fetching reservations', 
+            error: error.message 
+        });
+    }
+});
+
 // @desc confirms a reservation
 router.put('/pay/:reservationId', async (req, res) => {
     try {

@@ -11,12 +11,26 @@ const userSchema = new mongoose.Schema({
   nationalId:{
     type: Number,
     unique: true,
-    required: true
+    required: true,
+    validate: {
+      validator: function(v) {
+          return /^\d{10}$/.test(v);
+      },
+      message: props => `${props.value} is not a valid national ID!`
+    }
   }, 
   email: {  
     type: String,  
     sparse: true,
     unique: true,
+    lowercase: true,
+    trim: true,
+    validate: {
+      validator: function(v) {
+          return /^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/.test(v);
+      },
+      message: props => `${props.value} is not a valid email address!`
+  }
   },  
   password: {  
     type: String  

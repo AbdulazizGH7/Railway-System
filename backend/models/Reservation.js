@@ -21,6 +21,7 @@ const reservationSchema = new mongoose.Schema({
     paymentDeadline: Date,    
     cost: Number,
     dependents:[{
+      _id: false,
       firstName: String,
       lastName: String
     }],

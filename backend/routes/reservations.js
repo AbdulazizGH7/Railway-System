@@ -528,4 +528,141 @@ router.put('/promote/:reservationId', async (req, res) => {
     }
 });
 
+router.put('/:reservationId', async (req, res) => {
+    try {
+        const { trainId, seatsNum, dependents } = req.body;
+        const reservationId = req.params.reservationId;
+
+        // Find the current reservation
+        const currentReservation = await Reservation.findById(reservationId)
+            .populate('train');
+
+        if (!currentReservation) {
+            return res.status(404).json({ error: 'Reservation not found' });
+        }
+
+        // Can only edit pending or waitlisted reservations
+        if (currentReservation.status === 'confirmed') {
+            return res.status(400).json({
+                error: 'Cannot edit confirmed reservations'
+            });
+        }
+
+        // If changing train, validate new train
+        let newTrain = currentReservation.train;
+        if (trainId && trainId !== currentReservation.train._id.toString()) {
+            newTrain = await Train.findById(trainId);
+            if (!newTrain) {
+                return res.status(404).json({ error: 'New train not found' });
+            }
+
+            // Check if train departure hasn't passed
+            if (newTrain.status === 'finished') {
+                return res.status(400).json({
+                    error: 'Cannot change to a train that has already departed'
+                });
+            }
+        }
+
+        // If changing number of seats
+        const newSeatsNum = seatsNum || currentReservation.seatsNum;
+        
+        // Check seat availability if changing train or increasing seats
+        if ((trainId && trainId !== currentReservation.train._id.toString()) || 
+            (newSeatsNum > currentReservation.seatsNum)) {
+            
+            const additionalSeatsNeeded = trainId === currentReservation.train._id.toString() 
+                ? newSeatsNum - currentReservation.seatsNum 
+                : newSeatsNum;
+
+            if (currentReservation.status === 'pending' && 
+                newTrain.availableSeats < additionalSeatsNeeded) {
+                return res.status(400).json({
+                    error: 'Not enough seats available on the train',
+                    availableSeats: newTrain.availableSeats
+                });
+            }
+        }
+
+        // Validate dependents if provided
+        if (dependents) {
+            for (const dependent of dependents) {
+                if (!dependent.firstName || !dependent.lastName) {
+                    return res.status(400).json({
+                        error: 'Each dependent must have firstName and lastName'
+                    });
+                }
+            }
+        }
+
+        passengerUser = await User.findById(currentReservation.passenger);
+
+        const getDiscount = () => {
+            if(passengerUser.loyaltyTier === 'Gold')
+                return 0.75
+            else if(passengerUser.loyaltyTier === 'Silver')
+                return 0.9
+            else if(passengerUser.loyaltyTier === 'Green')
+                return 0.95
+            else
+                return 1
+        }
+        const discount = getDiscount()
+
+        // Calculate cost adjustment if changing train or seats
+        const newCost = newTrain.seatCost * newSeatsNum * discount;
+        
+        // Prepare update object
+        const updateObj = {
+            ...(trainId && { train: trainId }),
+            ...(seatsNum && { seatsNum: newSeatsNum }),
+            ...(dependents && { dependents }),
+            cost: newCost
+        };
+
+        // Update the reservation
+        // Using save() to trigger the payment deadline middleware
+        const reservation = await Reservation.findById(reservationId);
+        Object.assign(reservation, updateObj);
+        const updatedReservation = await reservation.save();
+
+        // Update seats on trains if necessary
+        if (currentReservation.status === 'pending') {
+            // If changing trains, update both old and new train
+            if (trainId && trainId !== currentReservation.train._id.toString()) {
+                // Return seats to old train
+                await Train.findByIdAndUpdate(
+                    currentReservation.train._id,
+                    { $inc: { availableSeats: currentReservation.seatsNum } }
+                );
+                // Take seats from new train
+                await Train.findByIdAndUpdate(
+                    trainId,
+                    { $inc: { availableSeats: -newSeatsNum } }
+                );
+            } 
+            // If just changing number of seats on same train
+            else if (newSeatsNum !== currentReservation.seatsNum) {
+                const seatsDifference = currentReservation.seatsNum - newSeatsNum;
+                await Train.findByIdAndUpdate(
+                    currentReservation.train._id,
+                    { $inc: { availableSeats: seatsDifference } }
+                );
+            }
+        }
+
+        return res.status(200).json({
+            message: 'Reservation updated successfully',
+            reservation: updatedReservation
+        });
+
+    } catch (error) {
+        console.error('Error updating reservation:', error);
+        return res.status(500).json({
+            error: 'Internal server error',
+            message: error.message
+        });
+    }
+});
+
 module.exports = router;

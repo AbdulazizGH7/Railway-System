@@ -15,7 +15,7 @@ const ReservationModal = ({ reservation, onClose }) => {
                 </button>
                 <h2 className="text-xl font-bold mb-4">Reservation Details</h2>
                 <div className="space-y-2">
-                    <p><strong>Reservation #:</strong> {reservation.id}</p>
+                    <p><strong>Reservation #:</strong> {reservation.reservationId}</p>
                     <p><strong>Passenger ID:</strong> {reservation.passengerId}</p>
                     <p><strong>From:</strong> {reservation.from}</p>
                     <p><strong>To:</strong> {reservation.to}</p>

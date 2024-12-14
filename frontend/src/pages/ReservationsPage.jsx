@@ -65,7 +65,6 @@ function ReservationsPage({ userType }) {
     });
   };
 
-
   return (
     <div className="flex flex-col items-center justify-start space-y-6 my-5">
       {/* Search Bar */}
@@ -77,7 +76,6 @@ function ReservationsPage({ userType }) {
         onChange={(e) => setSearchQuery(e.target.value)}
       />
 
-
       {/* Cards Layout */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-10/12">
         {filteredReservations.length > 0 ? (
@@ -88,6 +86,7 @@ function ReservationsPage({ userType }) {
               onClick={() => handleRowClick(reservation)}
             >
               <h3 className="text-xl font-semibold text-gray-800 mb-2">{reservation.from} to {reservation.to}</h3>
+              <p className="text-sm text-gray-600">Passenger ID: {reservation.passengerId}</p>
               <p className="text-sm text-gray-600">Date: {reservation.date}</p>
               <p className="text-sm text-gray-600">Departure: {reservation.departureTime}</p>
               <p className="text-sm text-gray-600">Arrival: {reservation.arrivalTime}</p>

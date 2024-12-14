@@ -5,6 +5,7 @@ const trains = require('./routes/trains')
 const reservations = require('./routes/reservations')
 const users = require('./routes/users')
 const TrainStatusUpdater = require('./services/trainStatusUpdater');
+require('./services/reminderService');
 const auth = require('./routes/auth')
 const PORT = process.env.PORT || 9000
 

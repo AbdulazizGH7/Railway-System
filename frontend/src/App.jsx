@@ -1,4 +1,5 @@
 import { Route, createBrowserRouter, createRoutesFromElements, RouterProvider, Navigate } from "react-router-dom";
+import { UserProvider } from './contexts/UserContext'; 
 import MainLayout from './layouts/MainLayout';
 import HomePage from "./pages/HomePage";
 import TripsPage from './pages/TripsPage'
@@ -18,11 +19,11 @@ function App() {
   const router = createBrowserRouter(
     createRoutesFromElements(
       <>
-      {/*<Route path="/" element={<Navigate to="/login" replace />} />*/}
+      <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignUpPage />} />
         <Route path="/" element={<MainLayout />}>
-          <Route path="/" element={<HomePage userType={"Admin"}/>}/>
+          <Route path="/home" element={<HomePage userType={"Admin"}/>}/>
           <Route path="/booking" element={<TripsPage/>}/>
           <Route path="/reservations" element={<ReservationsPage userType={"Admin"}/>}/>
           <Route path="/reserve/:id" element={user.role === 'admin' ? <AddReservationPageAdmin/> :<BookingPage/>}/>
@@ -35,7 +36,9 @@ function App() {
   )
   return (
     <>
-    <RouterProvider router={router}/>
+    <UserProvider>
+      <RouterProvider router={router}/>
+    </UserProvider>
     </>
   )
 }

@@ -528,6 +528,7 @@ router.put('/promote/:reservationId', async (req, res) => {
     }
 });
 
+// @desc edit reservation
 router.put('/:reservationId', async (req, res) => {
     try {
         const { trainId, seatsNum, dependents } = req.body;

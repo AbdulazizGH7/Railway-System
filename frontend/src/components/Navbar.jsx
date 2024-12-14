@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaTrain, FaSignOutAlt, FaBars } from 'react-icons/fa'; // Importing the SignOut and Bars icons
+import { FaTrain, FaSignOutAlt, FaBars } from 'react-icons/fa';
+import {useUser} from '../contexts/UserContext'
 
 function Navbar() {
+  const {logout} = useUser()
   const [isMenuOpen, setIsMenuOpen] = useState(false);  // State for managing mobile menu
   const navigate = useNavigate();  // Using the navigate hook
 
   const handleLogout = () => {
-    // You can add any logout logic here, like clearing the session or token.
-    navigate("/login");  // Navigates to the login page
+    navigate("/login");
+    logout()  // Navigates to the login page
   };
 
   const toggleMenu = () => {
@@ -18,7 +20,7 @@ function Navbar() {
   return (
     <header className="bg-gradient-to-r from-indigo-600 to-blue-500 p-5 flex justify-between items-center shadow-lg">
       {/* Logo with icon and text */}
-      <Link to="/" className="flex items-center gap-3 text-2xl font-bold text-white hover:text-gray-200 transition-colors duration-300">
+      <Link to="/home" className="flex items-center gap-3 text-2xl font-bold text-white hover:text-gray-200 transition-colors duration-300">
         <FaTrain className="text-3xl" /> {/* Train icon */}
         Saudi Railway
       </Link>
@@ -33,7 +35,7 @@ function Navbar() {
       {/* Navigation Links */}
       <ul className={`lg:flex lg:gap-8 text-lg text-white gap-8 ${isMenuOpen ? "flex" : "hidden"} flex-col lg:flex-row`}>
         <li>
-          <Link to={"/"} className="hover:text-gray-200 transition-colors duration-300" onClick={() => setIsMenuOpen(false)}>Home</Link>
+          <Link to={"/home"} className="hover:text-gray-200 transition-colors duration-300" onClick={() => setIsMenuOpen(false)}>Home</Link>
         </li>
         <li>
           <Link to={"/booking"} className="hover:text-gray-200 transition-colors duration-300" onClick={() => setIsMenuOpen(false)}>Booking</Link>

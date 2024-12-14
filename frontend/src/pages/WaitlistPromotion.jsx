@@ -107,11 +107,7 @@ const WaitlistPromotion = () => {
   };
 
   const handleSelectPassenger = (passenger) => {
-    setSelectedPassengers((prevSelected) =>
-      prevSelected.some((p) => p.passengerId === passenger.passengerId)
-        ? prevSelected.filter((p) => p.passengerId !== passenger.passengerId)
-        : [...prevSelected, passenger]
-    );
+    setSelectedPassengers([passenger]);
   };
 
   const handlePromotePassengers = async () => {

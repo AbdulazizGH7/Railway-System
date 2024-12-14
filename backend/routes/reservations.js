@@ -126,6 +126,7 @@ router.post('/', async (req, res) => {
             nationalId, // Required for admin making reservation
             firstName, // Required for admin making new user
             lastName,  // Required for admin making new user
+            email,     // Required for admin making new user 
             dependents // Optional
         } = req.body;
 
@@ -139,6 +140,11 @@ router.post('/', async (req, res) => {
                     error: 'National ID is required for admin reservations' 
                 });
             }
+            else if(!email){
+                return res.status(400).json({ 
+                    error: 'Email is required for admin reservations' 
+                });
+            }
 
             // Check if user exists
             passengerUser = await User.findOne({ nationalId });
@@ -149,6 +155,7 @@ router.post('/', async (req, res) => {
                     nationalId,
                     firstName,
                     lastName,
+                    email,
                     role: 'passenger'
                 });
             } else if (!passengerUser) {

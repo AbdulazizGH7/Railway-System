@@ -24,6 +24,7 @@ const userSchema = new mongoose.Schema({
     sparse: true,
     unique: true,
     lowercase: true,
+    required: true,
     trim: true,
     validate: {
       validator: function(v) {

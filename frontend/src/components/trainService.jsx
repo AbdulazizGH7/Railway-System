@@ -59,9 +59,12 @@ import axios from 'axios';
       }
     },
   
-    async updateReservation(reservationId, updatedData) {
+    async updateReservation(reservationId, updateData) {
       try {
-        const response = await axios.put(`http://localhost:8000/api/reservations/${reservationId}`, updatedData);
+        const response = await axios.put(
+          `http://localhost:8000/api/reservations/${reservationId}`,
+          updateData
+        );
         return response.data;
       } catch (error) {
         console.error(`Error updating reservation ${reservationId}:`, error);

@@ -2,9 +2,14 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { FaBook, FaClipboardList, FaUserCheck, FaClock } from "react-icons/fa";
 import ActiveTrains from "../components/ActiveTrains";
+import { useUser } from "../contexts/UserContext"
 
-function HomePage({ userType }) {
-  const isAdmin = userType === "Admin";
+function HomePage() {
+  
+  const { user } = useUser(); 
+  const userType=user.role;
+  const isAdmin = userType === "admin";
+
   const navigate = useNavigate();
 
   return (

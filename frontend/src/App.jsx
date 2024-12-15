@@ -11,36 +11,43 @@ import ReservationsPage from "./pages/ReservationsPage";
 import WaitlistPromotion from "./pages/WaitlistPromotion";
 import AssignDriverPage from"./pages/AssignDriverPage"
 import AddReservationPageAdmin from "./pages/AddReservationPageAdmin";
-
+import { useUser } from "./contexts/UserContext"
 function App() {
-  const user = {
-    role: 'admin'
-  }
   const router = createBrowserRouter(
     createRoutesFromElements(
       <>
-      <Route path="/" element={<Navigate to="/login" replace />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
         <Route path="/" element={<MainLayout />}>
-          <Route path="/home" element={<HomePage userType={"Admin"}/>}/>
-          <Route path="/booking" element={<TripsPage/>}/>
-          <Route path="/reservations" element={<ReservationsPage userType={"Admin"}/>}/>
-          <Route path="/reserve/:id" element={user.role === 'admin' ? <AddReservationPageAdmin/> :<BookingPage/>}/>
+          <Route path="/home" element={<HomePage userType={"Admin"} />} />
+          <Route path="/booking" element={<TripsPage />} />
+          <Route path="/reservations" element={<ReservationsPage userType={"Admin"} />} />
+          <Route
+            path="/reserve/:trainId"
+            element={
+              <RoleBasedRoute />
+            }
+          />
           <Route path="/payment" element={<PaymentPage />} />
           <Route path="/WaitlistPromotion" element={<WaitlistPromotion />} />
           <Route path="/AssignDriverPage" element={<AssignDriverPage />} />
         </Route>
       </>
     )
-  )
+  );
+
   return (
-    <>
     <UserProvider>
-      <RouterProvider router={router}/>
+      <RouterProvider router={router} />
     </UserProvider>
-    </>
-  )
+  );
 }
 
-export default App
+const RoleBasedRoute = () => {
+  const { user } = useUser();
+
+  return user?.role === "admin" ? <AddReservationPageAdmin /> : <BookingPage />;
+};
+
+export default App;

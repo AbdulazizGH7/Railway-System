@@ -122,7 +122,7 @@ function ReservationsPage() {
               <div className="space-y-2 mb-4 cursor-pointer" onClick={() => handleRowClick(reservation)}>
                 <div className="flex items-center text-sm text-gray-600">
                   <span className="w-32 font-medium">Passenger ID:</span>
-                  <span>{reservation._id}</span>
+                  <span>{reservation.passengerId}</span>
                 </div>
                 <div className="flex items-center text-sm text-gray-600">
                   <span className="w-32 font-medium">Date:</span>

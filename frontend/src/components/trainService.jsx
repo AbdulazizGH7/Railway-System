@@ -78,5 +78,15 @@ import axios from 'axios';
         throw error;
       }
     },
+
+    async getPaymentDetails(reservationId) {
+      try {
+        const response = await axios.get(`http://localhost:8000/api/reservations/pay/${reservationId}`);
+        return response.data; // Return the reservation details
+      } catch (error) {
+        console.error(`Error fetching payment details for reservation ${reservationId}:`, error);
+        throw error; // Rethrow the error to handle it in the component
+      }
+    },
   };
   export default trainService;

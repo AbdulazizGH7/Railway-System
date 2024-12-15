@@ -493,8 +493,6 @@ router.put('/promote/:reservationId', async (req, res) => {
         }
 
         const train = reservation.train;
-
-        // Check if there are enough available seats-------(I did remove it to make the waitlist work)
     
         if (train.availableSeats < reservation.seatsNum) {
             return res.status(400).json({ 
@@ -502,11 +500,16 @@ router.put('/promote/:reservationId', async (req, res) => {
                 message: `Only ${train.availableSeats} seats available` 
             });
         }
-        // Update reservation status to pending
-        reservation.status = 'pending';
 
-        // Save the reservation (this will trigger the middleware to recalculate the payment deadline)
-        const updatedReservation = await reservation.save();
+        // Update reservation status to pending
+        const updatedReservation = await Reservation.findByIdAndUpdate(
+            reservation._id,
+            { status: 'pending' },
+            {
+                new: true,
+                runValidators: true  
+            }
+        );
 
         // Update train's available seats
         await Train.findByIdAndUpdate(
@@ -567,25 +570,30 @@ router.put('/:reservationId', async (req, res) => {
 
         // If changing number of seats
         const newSeatsNum = seatsNum || currentReservation.seatsNum;
-        
-        // Check seat availability if changing train or increasing seats
+      
+        // Check seat availability and determine status
+        let newStatus = currentReservation.status;
         if ((trainId && trainId !== currentReservation.train._id.toString()) || 
             (newSeatsNum > currentReservation.seatsNum)) {
-            
+          
             const additionalSeatsNeeded = trainId === currentReservation.train._id.toString() 
                 ? newSeatsNum - currentReservation.seatsNum 
                 : newSeatsNum;
 
-            if (currentReservation.status === 'pending' && 
-                newTrain.availableSeats < additionalSeatsNeeded) {
+            // If moving to a new train or requesting more seats, check availability
+            if (newTrain.availableSeats >= additionalSeatsNeeded) {
+                newStatus = 'pending'; // Set to pending if seats are available
+            } else if (currentReservation.status === 'pending') {
                 return res.status(400).json({
                     error: 'Not enough seats available on the train',
                     availableSeats: newTrain.availableSeats
                 });
+            } else {
+                newStatus = 'waitlisted'; // Keep as waitlisted if no seats available
             }
         }
 
-        // Validate dependents if provided
+        // Rest of the validation code...
         if (dependents) {
             for (const dependent of dependents) {
                 if (!dependent.firstName || !dependent.lastName) {
@@ -612,30 +620,32 @@ router.put('/:reservationId', async (req, res) => {
 
         // Calculate cost adjustment if changing train or seats
         const newCost = newTrain.seatCost * newSeatsNum * discount;
-        
-        // Prepare update object
+      
+        // Prepare update object with new status
         const updateObj = {
             ...(trainId && { train: trainId }),
             ...(seatsNum && { seatsNum: newSeatsNum }),
             ...(dependents && { dependents }),
+            status: newStatus,
             cost: newCost
         };
 
         // Update the reservation
-        // Using save() to trigger the payment deadline middleware
         const reservation = await Reservation.findById(reservationId);
         Object.assign(reservation, updateObj);
         const updatedReservation = await reservation.save();
 
         // Update seats on trains if necessary
-        if (currentReservation.status === 'pending') {
+        if (newStatus === 'pending') {
             // If changing trains, update both old and new train
             if (trainId && trainId !== currentReservation.train._id.toString()) {
-                // Return seats to old train
-                await Train.findByIdAndUpdate(
-                    currentReservation.train._id,
-                    { $inc: { availableSeats: currentReservation.seatsNum } }
-                );
+                // Return seats to old train if original was pending
+                if (currentReservation.status === 'pending') {
+                    await Train.findByIdAndUpdate(
+                        currentReservation.train._id,
+                        { $inc: { availableSeats: currentReservation.seatsNum } }
+                    );
+                }
                 // Take seats from new train
                 await Train.findByIdAndUpdate(
                     trainId,

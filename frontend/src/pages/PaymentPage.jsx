@@ -31,7 +31,15 @@ function PaymentPage() {
 const handlePaymentSuccess = async () => {
   try {
     const data = await trainService.confirmPayment(reservationId); // Call the confirm payment API
-    alert("Payment Successful!");
+    
+    // Show the pop-up with the seat numbers
+    if (data.seatNumbers) {
+      const seatNumbers = data.seatNumbers.join(', ');
+      alert(`Payment Successful! Your seat numbers are: ${seatNumbers}`);
+    } else {
+      alert("Payment Successful!");
+    }
+    
     navigate("/reservations"); // Navigate to the reservations page after successful payment
   } catch (error) {
     console.error("Error confirming payment:", error);

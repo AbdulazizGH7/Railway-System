@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useReducer } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaTrash, FaPen,FaSearch } from 'react-icons/fa';
 import { AiOutlineCheckCircle } from 'react-icons/ai';
@@ -18,6 +18,7 @@ function ReservationsPage() {
   const [selectedReservation, setSelectedReservation] = useState(null);
   const [deleteReservation, setDeleteReservation] = useState(null);
   const [editReservation, setEditReservation] = useState(null);
+  const [, forceUpdate] = useReducer(x => x + 1, 0);
 
   useEffect(() => {
     async function fetchReservations() {
@@ -46,9 +47,9 @@ function ReservationsPage() {
 
   const filteredReservations = reservations.filter(
     (reservation) =>
-      reservation.reservationId.includes(searchQuery) ||
-      reservation._id.includes(searchQuery)
-  );
+      reservation.reservationId.toString().includes(searchQuery) ||
+      reservation.passengerId.toString().includes(searchQuery)
+);
 
   const handleRowClick = (reservation) => {
     setSelectedReservation(reservation);
@@ -65,15 +66,19 @@ function ReservationsPage() {
 
   const handleEdit = async (updatedReservation) => {
     try {
-      const updatedData = await trainService.updateReservation(
-        updatedReservation.reservationId,
-        updatedReservation
+      const updatedData = await trainService.updateReservation(updatedReservation.reservation._id,{
+        trainId: updatedReservation.reservation.train,
+        seatsNum: updatedReservation.reservation.seatsNum,
+        dependents: updatedReservation.reservation.dependents
+        }
       );
-      setReservations((prev) =>
-        prev.map((res) =>
-          res.reservationId === updatedReservation.reservationId ? updatedData : res
-        )
-      );
+      window.location.reload()
+      
+      // setReservations((prev) =>{
+      //   console.log(prev)
+      //   prev.map((res) =>
+      //     res.reservationId === updatedReservation.reservation._id ? updatedData : res
+      // );
     } catch (error) {
       console.error("Error updating reservation:", error);
     }
@@ -122,7 +127,7 @@ function ReservationsPage() {
               <div className="space-y-2 mb-4 cursor-pointer" onClick={() => handleRowClick(reservation)}>
                 <div className="flex items-center text-sm text-gray-600">
                   <span className="w-32 font-medium">Passenger ID:</span>
-                  <span>{reservation._id}</span>
+                  <span>{reservation.passengerId}</span>
                 </div>
                 <div className="flex items-center text-sm text-gray-600">
                   <span className="w-32 font-medium">Date:</span>
@@ -149,9 +154,9 @@ function ReservationsPage() {
                     <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                       reservation.status === 'confirmed' 
                         ? 'bg-green-100 text-green-800'
-                        : 'bg-yellow-100 text-yellow-800'
+                        : (reservation.status === 'waitlisted' ? 'bg-gray-100 text-gray-800' : 'bg-yellow-100 text-yellow-800')
                     }`}>
-                      {reservation.status === 'confirmed' ? 'Paid' : 'Pending'}
+                      {reservation.status === 'confirmed' ? 'Paid' : (reservation.status === 'waitlisted' ? 'Waitlisted' : 'Pending')}
                     </span>
                   ) : (
                     <div className="w-full">

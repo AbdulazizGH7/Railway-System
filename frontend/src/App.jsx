@@ -12,6 +12,8 @@ import WaitlistPromotion from "./pages/WaitlistPromotion";
 import AssignDriverPage from"./pages/AssignDriverPage"
 import AddReservationPageAdmin from "./pages/AddReservationPageAdmin";
 import { useUser } from "./contexts/UserContext"
+import TrainsPage from "./pages/TrainsPage"
+
 function App() {
   const router = createBrowserRouter(
     createRoutesFromElements(
@@ -29,6 +31,7 @@ function App() {
               <RoleBasedRoute />
             }
           />
+          <Route path="/trains" element={<TrainsPage />} />
           <Route path="/payment/:reservationId" element={<PaymentPage />} />
           <Route path="/WaitlistPromotion" element={<WaitlistPromotion />} />
           <Route path="/AssignDriverPage" element={<AssignDriverPage />} />

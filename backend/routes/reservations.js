@@ -204,7 +204,7 @@ router.post('/', async (req, res) => {
         };
 
         // If there are waitlisted reservations or no available seats, waitlist the new reservation
-        if (existingWaitlistedReservations || train.availableSeats <= 0) {
+        if (existingWaitlistedReservations || train.availableSeats === 0) {
             reservationData.status = 'waitlisted';
             const reservation = await Reservation.create(reservationData);
 
@@ -496,7 +496,12 @@ router.put('/promote/:reservationId', async (req, res) => {
 
         // Check if there are enough available seats-------(I did remove it to make the waitlist work)
     
-
+        if (train.availableSeats < reservation.seatsNum) {
+            return res.status(400).json({ 
+                error: 'Not enough seats', 
+                message: `Only ${train.availableSeats} seats available` 
+            });
+        }
         // Update reservation status to pending
         reservation.status = 'pending';
 

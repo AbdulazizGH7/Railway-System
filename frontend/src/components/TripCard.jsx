@@ -105,7 +105,7 @@ const loadFactor = trip.totalSeats && trip.availableSeats !== undefined
                 trip.availableSeats <= 10 ? 'text-yellow-600' : 
                 'text-green-600'
               }`}>
-                {trip.availableSeats <= 0 ? 'No seats available' : `${trip.availableSeats} seats`}
+                {trip.availableSeats === 0 ? 'No seats available' : `${trip.availableSeats} seats`}
               </span>
             </div>
             
@@ -127,12 +127,12 @@ const loadFactor = trip.totalSeats && trip.availableSeats !== undefined
           <button 
             onClick={handleReserveClick}
             className={`px-6 py-2 ${
-              trip.availableSeats <= 0 
+              trip.availableSeats === 0 
                 ? 'bg-yellow-500 hover:bg-yellow-600' 
                 : 'bg-blue-500 hover:bg-blue-600'
             } text-white rounded-md transition-colors duration-200 text-sm font-medium flex items-center`}
           >
-            {trip.availableSeats <= 0 ? 'Join Wait List' : 'Reserve'}
+            {trip.availableSeats === 0 ? 'Join Wait List' : 'Reserve'}
           </button>
         </div>
       </div>

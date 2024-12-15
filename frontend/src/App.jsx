@@ -20,10 +20,15 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/" element={<MainLayout />}>
-          <Route path="/home" element={<HomePage userType={"Admin"}/>}/>
-          <Route path="/booking" element={<TripsPage/>}/>
-          <Route path="/reservations" element={<ReservationsPage userType={"Admin"}/>}/>
-          <Route path="/reserve/:id" element={user.role === 'admin' ? <AddReservationPageAdmin/> :<BookingPage/>}/>
+          <Route path="/home" element={<HomePage userType={"Admin"} />} />
+          <Route path="/booking" element={<TripsPage />} />
+          <Route path="/reservations" element={<ReservationsPage userType={"Admin"} />} />
+          <Route
+            path="/reserve/:trainId"
+            element={
+              <RoleBasedRoute />
+            }
+          />
           <Route path="/payment" element={<PaymentPage />} />
           <Route path="/WaitlistPromotion" element={<WaitlistPromotion />} />
           <Route path="/AssignDriverPage" element={<AssignDriverPage />} />

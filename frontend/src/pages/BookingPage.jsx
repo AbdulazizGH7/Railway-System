@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FiUsers } from "react-icons/fi";
-
-import { useUser } from "../contexts/UserContext"
+import { useUser } from "../contexts/UserContext";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function BookingPage() {
   const { trainId } = useParams();
   const navigate = useNavigate();
-  const { user } = useUser(); // Get user from context
+  const { user } = useUser();
 
   const [numSeats, setNumSeats] = useState(1);
   const [dependents, setDependents] = useState([{ firstName: "", lastName: "" }]);
@@ -37,18 +38,19 @@ function BookingPage() {
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+      toast.error("Please fill in all required fields for dependents.");
       return;
     }
 
     setBookingStatus("Processing your reservation...");
+    toast.info("Processing your reservation...");
 
     try {
-      // Create reservation payload matching API requirements
       const reservationData = {
-        user: user, // Send authenticated user
+        user: user,
         trainId,
         seatsNum: numSeats,
-        dependents: numSeats > 1 ? dependents : [] // Only send dependents if more than 1 seat
+        dependents: numSeats > 1 ? dependents : []
       };
 
       const response = await fetch('http://localhost:8000/api/reservations', {
@@ -68,10 +70,12 @@ function BookingPage() {
       // Handle different reservation statuses
       if (data.reservation.status === 'waitlisted') {
         setBookingStatus("Your reservation has been waitlisted.");
-        alert("All seats are currently taken. Your reservation has been added to the waitlist.");
+        toast.warning("Your reservation has been added to the waitlist.");
       } else if (data.reservation.status === 'pending') {
         setBookingStatus("Your reservation is pending confirmation.");
-        alert("Your reservation is pending confirmation.");
+        toast.success("Your reservation is pending confirmation.");
+      } else {
+        toast.success("Reservation successful!");
       }
 
       // Navigate to reservations page after short delay
@@ -82,6 +86,7 @@ function BookingPage() {
     } catch (error) {
       console.error('Reservation error:', error);
       setBookingStatus(error.message || "Reservation failed. Please try again.");
+      toast.error(error.message || "Reservation failed. Please try again.");
     }
   };
 
@@ -92,8 +97,20 @@ function BookingPage() {
   };
 
   return (
-    <>
     <div className="min-h-screen bg-gradient-to-b from-blue-200 to-white py-10 px-4">
+      <ToastContainer
+        position="top-right"
+        autoClose={2500}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+
       <div className="max-w-lg mx-auto bg-white p-8 rounded-xl shadow-2xl transition-all transform hover:scale-105 duration-300">
         <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
           Make Your Reservation
@@ -163,7 +180,7 @@ function BookingPage() {
           </div>
         )}
       </div>
-    </div></>
+    </div>
   );
 }
 

@@ -23,6 +23,7 @@ const ReservationModal = ({ reservation, onClose }) => {
                     <p><strong>Departure Time:</strong> {reservation.departureTime}</p>
                     <p><strong>Arrival Time:</strong> {reservation.arrivalTime}</p>
                     <p><strong>Trip Duration:</strong> {reservation.duration}</p>
+                    {/* <p><strong>dependents info:</strong> {reservation.dependents}</p> */}
                 </div>
             </div>
         </div>

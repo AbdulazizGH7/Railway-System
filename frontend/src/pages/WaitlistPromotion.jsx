@@ -7,8 +7,8 @@ import moment from 'moment';
 import SelectedTrainBadge from '../components/SelectedTrainBadge';
 import CustomTrainOption from '../components/CustomTrainOption';
 import fetchTrainOptions from '../components/fetchTrainOptions';
-
-
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const WaitlistPromotion = () => {
   const [trainOptions, setTrainOptions] = useState([]);
@@ -19,8 +19,6 @@ const WaitlistPromotion = () => {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  
-
   const fetchWaitlistedPassengers = async (trainIds) => {
     try {
       const waitlistedPassengers = [];
@@ -29,7 +27,6 @@ const WaitlistPromotion = () => {
         const response = await axios.get(`http://localhost:8000/api/reservations/waitlist/${trainId}`);
         const { waitlist } = response.data;
         
-        // Process each tier
         Object.entries(waitlist).forEach(([tier, passengers]) => {
           passengers.forEach(passenger => {
             waitlistedPassengers.push({
@@ -49,175 +46,116 @@ const WaitlistPromotion = () => {
       return waitlistedPassengers;
     } catch (error) {
       console.error('Error fetching waitlisted passengers:', error);
+      toast.error('Failed to fetch waitlisted passengers');
       throw error;
     }
   };
 
-  // Modified promoteWaitlistedPassenger function
-const promoteWaitlistedPassenger = async (trainNo, passengerId, reservationId) => {
-  try {
-    // First check the train's available seats
-    const selectedTrain = trainOptions.find(train => train.value === trainNo);
-    if (!selectedTrain) {
-      throw new Error('Train information not found');
-    }
-
-
-    // Call the promote endpoint
-    const promotionResponse = await axios.put(
-      `http://localhost:8000/api/reservations/promote/${reservationId}`
-    );
-
-    if (promotionResponse.data.reservation) {
-      return {
-        success: true,
-        message: promotionResponse.data.message,
-        reservation: promotionResponse.data.reservation,
-        status: 'pending',
-        trainName: selectedTrain.label
-      };
-    }
-    
-    throw new Error('Promotion failed');
-  } catch (error) {
-    if (error.response?.data) {
-      // Handle API error responses
-      const errorMessage = error.response.data.message || error.response.data.error;
-      throw new Error(errorMessage);
-    }
-    throw error;
-  }
-};
-
-// Modified handlePromotePassengers function
-const handlePromotePassengers = async () => {
-  if (!selectedPassengers.length) {
-    setError('Please select at least one passenger to promote');
-    return;
-  }
-
-  setIsLoading(true);
-  setError(null);
-
-  try {
-    const results = [];
-    for (const passenger of selectedPassengers) {
-      // Find the corresponding train
-      const selectedTrain = trainOptions.find(train => train.value === passenger.trainNo);
-      
+  const promoteWaitlistedPassenger = async (trainNo, passengerId, reservationId) => {
+    try {
+      const selectedTrain = trainOptions.find(train => train.value === trainNo);
       if (!selectedTrain) {
-        results.push({
-          passenger: passenger.name,
-          error: 'Train information not found',
-          status: 'failed'
-        });
-        continue;
+        toast.error('Train information not found');
+        throw new Error('Train information not found');
       }
 
-      try {
-        const result = await promoteWaitlistedPassenger(
-          passenger.trainNo, 
-          passenger.passengerId,
-          passenger.reservationId
-        );
+      const promotionResponse = await axios.put(
+        `http://localhost:8000/api/reservations/promote/${reservationId}`
+      );
 
-        if (result.success) {
+      if (promotionResponse.data.reservation) {
+        toast.success(`Successfully promoted passenger on ${selectedTrain.label}`);
+        return {
+          success: true,
+          message: promotionResponse.data.message,
+          reservation: promotionResponse.data.reservation,
+          status: 'pending',
+          trainName: selectedTrain.label
+        };
+      }
+      
+      throw new Error('Promotion failed');
+    } catch (error) {
+      if (error.response?.data) {
+        const errorMessage = error.response.data.message || error.response.data.error;
+        toast.error(errorMessage);
+        throw new Error(errorMessage);
+      }
+      throw error;
+    }
+  };
+
+  const handlePromotePassengers = async () => {
+    if (!selectedPassengers.length) {
+      toast.error('Please select at least one passenger to promote');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const results = [];
+      const processingToast = toast.info('Processing promotions...', { autoClose: false });
+
+      for (const passenger of selectedPassengers) {
+        const selectedTrain = trainOptions.find(train => train.value === passenger.trainNo);
+        
+        if (!selectedTrain) {
           results.push({
             passenger: passenger.name,
-            message: result.message,
-            status: 'pending',
-            seatsNum: passenger.seatsNum,
-            trainName: result.trainName
+            error: 'Train information not found',
+            status: 'failed'
+          });
+          continue;
+        }
+
+        try {
+          const result = await promoteWaitlistedPassenger(
+            passenger.trainNo, 
+            passenger.passengerId,
+            passenger.reservationId
+          );
+
+          if (result.success) {
+            results.push({
+              passenger: passenger.name,
+              message: result.message,
+              status: 'pending',
+              seatsNum: passenger.seatsNum,
+              trainName: result.trainName
+            });
+          }
+        } catch (err) {
+          results.push({
+            passenger: passenger.name,
+            error: err.message,
+            status: 'failed',
+            trainName: selectedTrain.label
           });
         }
-      } catch (err) {
-        results.push({
-          passenger: passenger.name,
-          error: err.message,
-          status: 'failed',
-          trainName: selectedTrain.label
-        });
       }
+
+      toast.dismiss(processingToast);
+      setPromotionResult({ promotions: results });
+      
+      if (results.some(r => r.status === 'pending')) {
+        const trainNos = selectedTrains.map(train => train.value);
+        const updatedPassengers = await fetchWaitlistedPassengers(trainNos);
+        setWaitlistedPassengers(updatedPassengers);
+        setSelectedPassengers([]);
+        toast.success('Successfully updated waitlist');
+      }
+    } catch (err) {
+      toast.error('An error occurred during promotion: ' + err.message);
+    } finally {
+      setIsLoading(false);
     }
-
-    // Set promotion results
-    setPromotionResult({ promotions: results });
-    
-    // Refresh the waitlist if any promotions were successful
-    if (results.some(r => r.status === 'pending')) {
-      const trainNos = selectedTrains.map(train => train.value);
-      const updatedPassengers = await fetchWaitlistedPassengers(trainNos);
-      setWaitlistedPassengers(updatedPassengers);
-      setSelectedPassengers([]);
-    }
-  } catch (err) {
-    setError('An error occurred during promotion: ' + err.message);
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-// Modified renderPromotionResult to show more detailed seat availability information
-const renderPromotionResult = () => {
-  if (!promotionResult?.promotions?.length) return null;
-
-  return (
-    <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-md">
-      <div className="flex items-center mb-2">
-        <h3 className="font-medium text-gray-700">Promotion Results:</h3>
-      </div>
-      {promotionResult.promotions.map((result, index) => (
-        <div 
-          key={index} 
-          className={`mt-2 p-3 rounded-md ${
-            result.status === 'pending' 
-              ? 'bg-green-50 border border-green-200' 
-              : 'bg-red-50 border border-red-200'
-          }`}
-        >
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="font-medium">{result.passenger}</p>
-              <p className="text-sm text-gray-600">Train: {result.trainName}</p>
-              {result.status === 'pending' ? (
-                <>
-                  <p className="text-sm text-green-600">
-                    Successfully promoted to pending status
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Seats promoted: {result.seatsNum}
-                  </p>
-                </>
-              ) : (
-                <>
-                  <p className="text-sm text-red-600">
-                    {result.error}
-                  </p>
-                  {result.seatsNeeded && (
-                    <p className="text-sm text-gray-600">
-                      Seats needed: {result.seatsNeeded} | Available: {result.seatsAvailable}
-                    </p>
-                  )}
-                </>
-              )}
-            </div>
-            {result.status === 'pending' ? (
-              <CheckCircle className="text-green-500" />
-            ) : (
-              <AlertCircle className="text-red-500" />
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-
+  };
 
   const handleFetchPassengers = async () => {
     if (!selectedTrains.length) {
-      setError('Please select at least one train');
+      toast.error('Please select at least one train');
       return;
     }
 
@@ -231,13 +169,14 @@ const renderPromotionResult = () => {
       const passengers = await fetchWaitlistedPassengers(trainNos);
 
       if (passengers.length === 0) {
-        setError('No waitlisted passengers found for the selected trains');
+        toast.info('No waitlisted passengers found for the selected trains');
         return;
       }
 
       setWaitlistedPassengers(passengers);
+      toast.success(`Found ${passengers.length} waitlisted passengers`);
     } catch (err) {
-      setError('Failed to fetch waitlisted passengers: ' + err.message);
+      toast.error('Failed to fetch waitlisted passengers: ' + err.message);
     } finally {
       setIsLoading(false);
     }
@@ -245,6 +184,7 @@ const renderPromotionResult = () => {
 
   const handleSelectPassenger = (passenger) => {
     setSelectedPassengers([passenger]);
+    toast.info(`Selected passenger: ${passenger.name}`);
   };
 
   const renderPassengersList = () => {
@@ -299,7 +239,60 @@ const renderPromotionResult = () => {
     );
   };
 
- 
+  const renderPromotionResult = () => {
+    if (!promotionResult?.promotions?.length) return null;
+
+    return (
+      <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-md">
+        <div className="flex items-center mb-2">
+          <h3 className="font-medium text-gray-700">Promotion Results:</h3>
+        </div>
+        {promotionResult.promotions.map((result, index) => (
+          <div 
+            key={index} 
+            className={`mt-2 p-3 rounded-md ${
+              result.status === 'pending' 
+                ? 'bg-green-50 border border-green-200' 
+                : 'bg-red-50 border border-red-200'
+            }`}
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="font-medium">{result.passenger}</p>
+                <p className="text-sm text-gray-600">Train: {result.trainName}</p>
+                {result.status === 'pending' ? (
+                  <>
+                    <p className="text-sm text-green-600">
+                      Successfully promoted to pending status
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Seats promoted: {result.seatsNum}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm text-red-600">
+                      {result.error}
+                    </p>
+                    {result.seatsNeeded && (
+                      <p className="text-sm text-gray-600">
+                        Seats needed: {result.seatsNeeded} | Available: {result.seatsAvailable}
+                      </p>
+                    )}
+                  </>
+                )}
+              </div>
+              {result.status === 'pending' ? (
+                <CheckCircle className="text-green-500" />
+              ) : (
+                <AlertCircle className="text-red-500" />
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   useEffect(() => {
     const loadTrainOptions = async () => {
@@ -307,7 +300,7 @@ const renderPromotionResult = () => {
         const trains = await fetchTrainOptions();
         setTrainOptions(trains);
       } catch (err) {
-        setError('Failed to load train options: ' + err.message);
+        toast.error('Failed to load train options: ' + err.message);
       }
     };
 
@@ -316,6 +309,19 @@ const renderPromotionResult = () => {
 
   return (
     <div className="max-w-xl mx-auto p-6 bg-white shadow-md rounded-lg">
+      <ToastContainer
+        position="top-right"
+        autoClose={1500}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+
       <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
         Waitlist Passenger Promotion
       </h2>

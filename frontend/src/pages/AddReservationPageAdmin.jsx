@@ -2,16 +2,16 @@ import React, { useState, useEffect } from "react";
 import { FiUsers } from "react-icons/fi";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from 'axios';
-import { useUser } from "../contexts/UserContext"
-
+import { useUser } from "../contexts/UserContext";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function AddReservationPageAdmin() {
   const { user } = useUser();
   const { trainId } = useParams();
   console.log(trainId)
   const [formData, setFormData] = useState({
-    
-    user:"",
+    user: "",
     nationalId: "",
     firstName: "",
     lastName: "",
@@ -76,10 +76,14 @@ function AddReservationPageAdmin() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      toast.error("Please fix the form errors before submitting.");
+      return;
+    }
 
     try {
       setReservationStatus("Processing reservation...");
+      toast.info("Processing your reservation...");
 
       const reservationData = {
         user,
@@ -96,13 +100,16 @@ function AddReservationPageAdmin() {
 
       if (response.data.reservation) {
         setReservationStatus(`Reservation ${response.data.reservation.status}`);
-        
-      
+        toast.success(`Reservation successfully ${response.data.reservation.status}`);
+        setTimeout(() => {
+          navigate('/reservations');
+        }, 2000);
       }
 
     } catch (error) {
       console.error('Reservation error:', error);
       setReservationStatus("Error creating reservation");
+      toast.error(error.response?.data?.error || "An unexpected error occurred");
       setErrors({
         submission: error.response?.data?.error || "An unexpected error occurred"
       });
@@ -111,6 +118,19 @@ function AddReservationPageAdmin() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-200 to-white py-10 px-4">
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+
       <div className="max-w-lg mx-auto bg-white p-8 rounded-xl shadow-2xl">
         <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
           Add Reservation

@@ -29,7 +29,7 @@ function App() {
               <RoleBasedRoute />
             }
           />
-          <Route path="/payment" element={<PaymentPage />} />
+          <Route path="/payment/:reservationId" element={<PaymentPage />} />
           <Route path="/WaitlistPromotion" element={<WaitlistPromotion />} />
           <Route path="/AssignDriverPage" element={<AssignDriverPage />} />
         </Route>

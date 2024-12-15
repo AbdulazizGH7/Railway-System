@@ -6,9 +6,11 @@ import trainService from '../components/trainService';
 import ReservationModal from '../components/ReservationModal';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 import EditReservationModal from '../components/EditReservationModal';
+import { useUser } from '../contexts/UserContext';
 
-function ReservationsPage({ userType }) {
-  const isAdmin = userType === 'admin';
+function ReservationsPage() {
+  const { user } = useUser();
+  const isAdmin = user?.role === 'admin';  // Assuming user object has a role field
   const navigate = useNavigate();
 
   const [reservations, setReservations] = useState([]);
@@ -17,24 +19,35 @@ function ReservationsPage({ userType }) {
   const [deleteReservation, setDeleteReservation] = useState(null);
   const [editReservation, setEditReservation] = useState(null);
 
-  // Fetch reservations on mount
   useEffect(() => {
     async function fetchReservations() {
       try {
-        const data = await trainService.getAllReservations();
-        setReservations(data);
+        if (!isAdmin) {
+          // Assuming the user object contains _id
+          if (user && user._id) {
+            const data = await trainService.getReservationByPassenger(user._id);
+            setReservations(data);
+          } else {
+            console.log("No passenger ID found for the user.");
+            setReservations([]); // No reservations if no _id
+          }
+        } else {
+          const data = await trainService.getAllReservations();
+          setReservations(data);
+        }
       } catch (error) {
         console.error("Error fetching reservations:", error);
       }
     }
-
+  
     fetchReservations();
-  }, []);
+  }, [user, isAdmin]);
+  
 
   const filteredReservations = reservations.filter(
     (reservation) =>
       reservation.reservationId.includes(searchQuery) ||
-      reservation.passengerId.includes(searchQuery)
+      reservation._id.includes(searchQuery)
   );
 
   const handleRowClick = (reservation) => {
@@ -67,7 +80,7 @@ function ReservationsPage({ userType }) {
   };
 
   const handlePaymentRedirect = (reservation) => {
-    navigate('/payment', {
+    navigate(`/payment/${reservation.reservationId}`, {
       state: { 
         trip: reservation,
         numSeats: reservation.seatsNum,
@@ -80,7 +93,7 @@ function ReservationsPage({ userType }) {
       {/* Search Bar */}
       <input
         type="text"
-        placeholder="Search by Reservation# or PassengerID"
+        placeholder="Search by Reservation# or _id"
         className="border rounded px-4 py-2 w-10/12 bg-gray-50 shadow-md focus:ring-2 focus:ring-blue-400 transition-all"
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
@@ -96,7 +109,7 @@ function ReservationsPage({ userType }) {
               onClick={() => handleRowClick(reservation)}
             >
               <h3 className="text-xl font-semibold text-gray-800 mb-2">{reservation.from} to {reservation.to}</h3>
-              <p className="text-sm text-gray-600">Passenger ID: {reservation.passengerId}</p>
+              <p className="text-sm text-gray-600">Passenger ID: {reservation._id}</p>
               <p className="text-sm text-gray-600">Date: {reservation.date}</p>
               <p className="text-sm text-gray-600">Payment Deadline: {reservation.paymentDeadline}</p>
               <p className="text-sm text-gray-600">Departure: {reservation.departureTime}</p>

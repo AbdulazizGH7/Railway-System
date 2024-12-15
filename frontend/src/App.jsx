@@ -27,7 +27,7 @@ function App() {
           <Route path="/booking" element={<TripsPage/>}/>
           <Route path="/reservations" element={<ReservationsPage userType={"Admin"}/>}/>
           <Route path="/reserve/:id" element={user.role === 'admin' ? <AddReservationPageAdmin/> :<BookingPage/>}/>
-          <Route path="/payment" element={<PaymentPage />} />
+          <Route path="/payment/:reservationId" element={<PaymentPage />} />
           <Route path="/WaitlistPromotion" element={<WaitlistPromotion />} />
           <Route path="/AssignDriverPage" element={<AssignDriverPage />} />
         </Route>

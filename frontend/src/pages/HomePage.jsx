@@ -25,9 +25,9 @@ function HomePage() {
       <div className="absolute bottom-0 left-0 w-full h-1 bg-white transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
     </button>
   );
-
+  // bg-gradient-to-br from-gray-100 to-gray-200
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200">
+    <div className="min-h-screen bg-sky-800">
       <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col lg:flex-row gap-8 lg:items-start">
           {/* ActiveTrains Section */}

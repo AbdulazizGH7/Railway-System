@@ -117,7 +117,7 @@ function AddReservationPageAdmin() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-200 to-white py-10 px-4">
+    <div className="min-h-screen bg-slate-700 py-10 px-4">
       <ToastContainer
         position="top-right"
         autoClose={5000}

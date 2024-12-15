@@ -99,7 +99,7 @@ function TripsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-sky-800 p-8">
       <div className="max-w-6xl mx-auto">
         <SearchPanel 
           fromCity={fromCity}

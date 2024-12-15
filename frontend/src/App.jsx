@@ -22,7 +22,7 @@ function App() {
         <Route path="/" element={<MainLayout />}>
           <Route path="/home" element={<HomePage />} />
           <Route path="/booking" element={<TripsPage />} />
-          <Route path="/reservations" element={<ReservationsPage userType={"Admin"} />} />
+          <Route path="/reservations" element={<ReservationsPage />} />
           <Route
             path="/reserve/:trainId"
             element={

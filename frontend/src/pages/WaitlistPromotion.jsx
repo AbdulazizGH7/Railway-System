@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import Select from 'react-select';
 import { AlertCircle, CheckCircle, ArrowRight } from 'lucide-react';
+import axios from 'axios';
+import trainService from '../components/trainService';
+import moment from 'moment';
+import SelectedTrainBadge from '../components/SelectedTrainBadge';
+import CustomTrainOption from '../components/CustomTrainOption';
+import fetchTrainOptions from '../components/fetchTrainOptions';
+
+
 
 const WaitlistPromotion = () => {
   const [trainOptions, setTrainOptions] = useState([]);
@@ -11,72 +19,201 @@ const WaitlistPromotion = () => {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Loyalty tier classification
-  const getLoyaltyTier = (points) => {
-    if (points >= 600) return 'Gold';
-    if (points >= 400) return 'Silver';
-    if (points >= 200) return 'Green';
-    return 'Regular';
-  };
+  
 
-  // Simulated train API
-  const fetchTrainOptions = async () => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve([
-          { value: 'TR101', label: 'Express Aziz (Al-hasa → Al-baha, 2024-06-15)' },
-          { value: 'TR202', label: 'King Fahad (Dammam → Al Jubail, 2024-06-16)' },
-        ]);
-      }, 500);
-    });
-  };
-
-  // Simulated waitlist fetch API
-  const fetchWaitlistedPassengers = async (trainNos) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const waitlistData = {
-          'TR101': [
-            { passengerId: 'P001', name: 'Ali', loyaltyPoints: 450, class: 'Second AC', waitlistPosition: 1 },
-            { passengerId: 'P002', name: 'Khalid', loyaltyPoints: 650, class: 'First AC', waitlistPosition: 2 },
-            { passengerId: 'P004', name: 'Mohammed', loyaltyPoints: 250, class: 'Second AC', waitlistPosition: 3 },
-            { passengerId: 'P005', name: 'Sara', loyaltyPoints: 150, class: 'Sleeper', waitlistPosition: 4 },
-          ],
-          'TR202': [
-            { passengerId: 'P003', name: 'Ahmad', loyaltyPoints: 750, class: 'First AC', waitlistPosition: 1 },
-            { passengerId: 'P006', name: 'Fatima', loyaltyPoints: 550, class: 'Second AC', waitlistPosition: 2 },
-            { passengerId: 'P007', name: 'Hassan', loyaltyPoints: 350, class: 'Sleeper', waitlistPosition: 3 },
-          ],
-        };
-
-        const combinedPassengers = trainNos.flatMap((trainNo) => waitlistData[trainNo] || []);
-        resolve(combinedPassengers);
-      }, 500);
-    });
-  };
-
-  // Simulated passenger promotion API
-  const promoteWaitlistedPassenger = async (trainNo, passengerId) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          success: true,
-          seatNumber: `${trainNo.slice(-2)}${passengerId.slice(-2)}`,
-          class: 'Second AC',
-          pnrNumber: `PNR${Math.floor(Math.random() * 1000000)}`,
+  const fetchWaitlistedPassengers = async (trainIds) => {
+    try {
+      const waitlistedPassengers = [];
+      
+      for (const trainId of trainIds) {
+        const response = await axios.get(`http://localhost:8000/api/reservations/waitlist/${trainId}`);
+        const { waitlist } = response.data;
+        
+        // Process each tier
+        Object.entries(waitlist).forEach(([tier, passengers]) => {
+          passengers.forEach(passenger => {
+            waitlistedPassengers.push({
+              passengerId: passenger.passengerId,
+              name: passenger.passengerName,
+              loyaltyTier: tier,
+              seatsNum: passenger.seatsNum,
+              trainNo: trainId,
+              reservationId: passenger._id,
+              createdAt: passenger.createdAt,
+              loyaltyPoints: passenger.loyaltyPoints
+            });
+          });
         });
-      }, 500);
-    });
+      }
+  
+      return waitlistedPassengers;
+    } catch (error) {
+      console.error('Error fetching waitlisted passengers:', error);
+      throw error;
+    }
   };
 
-  useEffect(() => {
-    const loadTrainOptions = async () => {
-      const trains = await fetchTrainOptions();
-      setTrainOptions(trains);
-    };
+  // Modified promoteWaitlistedPassenger function
+const promoteWaitlistedPassenger = async (trainNo, passengerId, reservationId) => {
+  try {
+    // First check the train's available seats
+    const selectedTrain = trainOptions.find(train => train.value === trainNo);
+    if (!selectedTrain) {
+      throw new Error('Train information not found');
+    }
 
-    loadTrainOptions();
-  }, []);
+
+    // Call the promote endpoint
+    const promotionResponse = await axios.put(
+      `http://localhost:8000/api/reservations/promote/${reservationId}`
+    );
+
+    if (promotionResponse.data.reservation) {
+      return {
+        success: true,
+        message: promotionResponse.data.message,
+        reservation: promotionResponse.data.reservation,
+        status: 'pending',
+        trainName: selectedTrain.label
+      };
+    }
+    
+    throw new Error('Promotion failed');
+  } catch (error) {
+    if (error.response?.data) {
+      // Handle API error responses
+      const errorMessage = error.response.data.message || error.response.data.error;
+      throw new Error(errorMessage);
+    }
+    throw error;
+  }
+};
+
+// Modified handlePromotePassengers function
+const handlePromotePassengers = async () => {
+  if (!selectedPassengers.length) {
+    setError('Please select at least one passenger to promote');
+    return;
+  }
+
+  setIsLoading(true);
+  setError(null);
+
+  try {
+    const results = [];
+    for (const passenger of selectedPassengers) {
+      // Find the corresponding train
+      const selectedTrain = trainOptions.find(train => train.value === passenger.trainNo);
+      
+      if (!selectedTrain) {
+        results.push({
+          passenger: passenger.name,
+          error: 'Train information not found',
+          status: 'failed'
+        });
+        continue;
+      }
+
+      try {
+        const result = await promoteWaitlistedPassenger(
+          passenger.trainNo, 
+          passenger.passengerId,
+          passenger.reservationId
+        );
+
+        if (result.success) {
+          results.push({
+            passenger: passenger.name,
+            message: result.message,
+            status: 'pending',
+            seatsNum: passenger.seatsNum,
+            trainName: result.trainName
+          });
+        }
+      } catch (err) {
+        results.push({
+          passenger: passenger.name,
+          error: err.message,
+          status: 'failed',
+          trainName: selectedTrain.label
+        });
+      }
+    }
+
+    // Set promotion results
+    setPromotionResult({ promotions: results });
+    
+    // Refresh the waitlist if any promotions were successful
+    if (results.some(r => r.status === 'pending')) {
+      const trainNos = selectedTrains.map(train => train.value);
+      const updatedPassengers = await fetchWaitlistedPassengers(trainNos);
+      setWaitlistedPassengers(updatedPassengers);
+      setSelectedPassengers([]);
+    }
+  } catch (err) {
+    setError('An error occurred during promotion: ' + err.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+// Modified renderPromotionResult to show more detailed seat availability information
+const renderPromotionResult = () => {
+  if (!promotionResult?.promotions?.length) return null;
+
+  return (
+    <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-md">
+      <div className="flex items-center mb-2">
+        <h3 className="font-medium text-gray-700">Promotion Results:</h3>
+      </div>
+      {promotionResult.promotions.map((result, index) => (
+        <div 
+          key={index} 
+          className={`mt-2 p-3 rounded-md ${
+            result.status === 'pending' 
+              ? 'bg-green-50 border border-green-200' 
+              : 'bg-red-50 border border-red-200'
+          }`}
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="font-medium">{result.passenger}</p>
+              <p className="text-sm text-gray-600">Train: {result.trainName}</p>
+              {result.status === 'pending' ? (
+                <>
+                  <p className="text-sm text-green-600">
+                    Successfully promoted to pending status
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Seats promoted: {result.seatsNum}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-red-600">
+                    {result.error}
+                  </p>
+                  {result.seatsNeeded && (
+                    <p className="text-sm text-gray-600">
+                      Seats needed: {result.seatsNeeded} | Available: {result.seatsAvailable}
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+            {result.status === 'pending' ? (
+              <CheckCircle className="text-green-500" />
+            ) : (
+              <AlertCircle className="text-red-500" />
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+
 
   const handleFetchPassengers = async () => {
     if (!selectedTrains.length) {
@@ -100,7 +237,7 @@ const WaitlistPromotion = () => {
 
       setWaitlistedPassengers(passengers);
     } catch (err) {
-      setError('Failed to fetch waitlisted passengers');
+      setError('Failed to fetch waitlisted passengers: ' + err.message);
     } finally {
       setIsLoading(false);
     }
@@ -110,67 +247,25 @@ const WaitlistPromotion = () => {
     setSelectedPassengers([passenger]);
   };
 
-  const handlePromotePassengers = async () => {
-    if (!selectedPassengers.length) {
-      setError('Please select at least one passenger to promote');
-      return;
-    }
-
-    try {
-      const trainNo = selectedTrains[0]?.value || 'Unknown Train';
-      for (const passenger of selectedPassengers) {
-        const result = await promoteWaitlistedPassenger(trainNo, passenger.passengerId);
-
-        if (result.success) {
-          setPromotionResult((prev) => ({
-            ...prev,
-            promotions: [
-              ...(prev?.promotions || []),
-              { passenger: passenger.name, seatNumber: result.seatNumber, pnrNumber: result.pnrNumber },
-            ],
-          }));
-
-          setWaitlistedPassengers((prev) =>
-            prev.filter((p) => p.passengerId !== passenger.passengerId)
-          );
-        } else {
-          setError('Promotion failed');
-        }
-      }
-
-      setSelectedPassengers([]);
-    } catch (err) {
-      setError('An error occurred during promotion');
-    }
-  };
-
-  // Group passengers by loyalty tier
-  const groupedPassengers = waitlistedPassengers.reduce((acc, passenger) => {
-    const tier = getLoyaltyTier(passenger.loyaltyPoints);
-    if (!acc[tier]) acc[tier] = [];
-    acc[tier].push(passenger);
-    return acc;
-  }, {});
-
-  const renderPassengersByTier = () => {
+  const renderPassengersList = () => {
     const tiers = ['Gold', 'Silver', 'Green', 'Regular'];
     
     return (
       <div className="mt-4">
         <h3 className="text-lg font-semibold mb-2 text-gray-700">Waitlisted Passengers by Tier</h3>
-        {tiers.map(tier => (
-          groupedPassengers[tier]?.length > 0 && (
+        {tiers.map(tier => {
+          const tierPassengers = waitlistedPassengers.filter(p => p.loyaltyTier === tier);
+          return tierPassengers.length > 0 && (
             <div key={tier} className="mb-4">
               <h4 className={`text-md font-medium mb-2 ${
-                tier === 'Gold' ? 'text-yellow-600' :
+                tier === 'Gold' ? 'text-yellow-600' : 
                 tier === 'Silver' ? 'text-gray-500' :
-                tier === 'Green' ? 'text-green-600' :
-                'text-blue-600'
+                tier === 'Green' ? 'text-green-600' : 'text-blue-600'
               }`}>
                 {tier} Tier
               </h4>
               <div className="space-y-2">
-                {groupedPassengers[tier].map((passenger) => (
+                {tierPassengers.map((passenger) => (
                   <div
                     key={passenger.passengerId}
                     onClick={() => handleSelectPassenger(passenger)}
@@ -184,10 +279,10 @@ const WaitlistPromotion = () => {
                       <div>
                         <p className="font-medium">{passenger.name}</p>
                         <p className="text-sm text-gray-600">
-                          ID: {passenger.passengerId} | 
-                          Waitlist Position: {passenger.waitlistPosition} | 
-                          Class: {passenger.class} | 
-                          Loyalty Points: {passenger.loyaltyPoints}
+                          Seats Requested: {passenger.seatsNum}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Waitlisted since: {moment(passenger.createdAt).format('DD MMM YYYY, HH:mm')}
                         </p>
                       </div>
                       {selectedPassengers.some((p) => p.passengerId === passenger.passengerId) && 
@@ -198,11 +293,26 @@ const WaitlistPromotion = () => {
                 ))}
               </div>
             </div>
-          )
-        ))}
+          );
+        })}
       </div>
     );
   };
+
+ 
+
+  useEffect(() => {
+    const loadTrainOptions = async () => {
+      try {
+        const trains = await fetchTrainOptions();
+        setTrainOptions(trains);
+      } catch (err) {
+        setError('Failed to load train options: ' + err.message);
+      }
+    };
+
+    loadTrainOptions();
+  }, []);
 
   return (
     <div className="max-w-xl mx-auto p-6 bg-white shadow-md rounded-lg">
@@ -218,13 +328,25 @@ const WaitlistPromotion = () => {
           onChange={setSelectedTrains}
           className="basic-multi-select"
           classNamePrefix="select"
+          components={{
+            Option: CustomTrainOption
+          }}
         />
       </div>
+
+      {selectedTrains.length > 0 && (
+        <div className="mb-4">
+          <h3 className="text-sm font-medium text-gray-700 mb-2">Selected Trains</h3>
+          {selectedTrains.map(train => (
+            <SelectedTrainBadge key={train.value} train={train} />
+          ))}
+        </div>
+      )}
 
       <button
         onClick={handleFetchPassengers}
         disabled={!selectedTrains.length || isLoading}
-        className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-blue-300"
       >
         {isLoading ? 'Loading...' : 'Fetch Waitlisted Passengers'}
       </button>
@@ -236,30 +358,19 @@ const WaitlistPromotion = () => {
         </div>
       )}
 
-      {waitlistedPassengers.length > 0 && renderPassengersByTier()}
+      {waitlistedPassengers.length > 0 && renderPassengersList()}
 
-      <button
-        onClick={handlePromotePassengers}
-        disabled={!selectedPassengers.length}
-        className="mt-4 w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500"
-      >
-        Promote Selected Passengers
-      </button>
-
-      {promotionResult?.promotions && promotionResult.promotions.length > 0 && (
-        <div className="mt-4 p-4 bg-green-50 border border-green-200 text-green-800 rounded-md flex items-center">
-          <CheckCircle className="mr-2 text-green-600" />
-          <div>
-            <p>Promotion Results:</p>
-            {promotionResult.promotions.map((result, index) => (
-              <div key={index}>
-                <p>{result.passenger} promoted to seat {result.seatNumber}</p>
-                <p>PNR: {result.pnrNumber}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+      {selectedPassengers.length > 0 && (
+        <button
+          onClick={handlePromotePassengers}
+          disabled={isLoading}
+          className="mt-4 w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-green-300"
+        >
+          {isLoading ? 'Promoting...' : 'Promote Selected Passengers'}
+        </button>
       )}
+
+      {renderPromotionResult()}
     </div>
   );
 };

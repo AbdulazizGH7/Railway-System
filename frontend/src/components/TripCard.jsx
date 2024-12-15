@@ -53,6 +53,8 @@ const loadFactor = trip.totalSeats && trip.availableSeats !== undefined
           <div className="flex items-center space-x-2">
             <FaTrain className="text-2xl text-blue-500" />
             <span className="font-semibold text-gray-700">{trip.trainNameEng}</span>
+            <span className="font-semibold text-gray-700">|</span>
+            <span className="font-semibold text-gray-700">{trip.trainNameAr}</span>
           </div>
           <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
             {`${duration.hours()}h ${duration.minutes()}m`}
